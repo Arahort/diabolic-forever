@@ -1,0 +1,33 @@
+## Interface: 16001
+
+## Title: |cffaa0022Diabolic|r |cfffafafaUI|r |cffccccccForever Arahort Edition|r
+## Notes: Orb based graphical interface for World of Warcraft Forever only (1.60.1)|nExperimental alpha maintained by Arahort (arahort.pro)|nBased on original DiabolicUI by Lars "Goldpaw" Norberg
+## Version: 6.6.6-r1
+## Author: Arahort
+## IconTexture: Interface\AddOns\DiabolicUI3\Assets\diabolic-lettermark
+
+## X-Category: Interface Enhancements
+## X-License: Custom
+## X-Website: https://github.com/Arahort/diabolic-forever
+
+## SavedVariables: DiabolicUI3_DB, DiabolicUI3_ForeverLog
+## SavedVariablesPerCharacter: DiabolicUI3_BagDump
+## OptionalDeps: Ace3, LibSharedMedia-3.0
+
+# TaintLess is disabled for this client; retain the original file for rollback.
+# https://www.townlong-yak.com/addons/taintless
+# TaintLess.xml
+
+Core\ForeverDiagnostics.lua
+
+# Libraries
+Libs\Libs.xml
+
+# Addon localization
+Locale\Locale.xml
+
+# Addon core
+Core\Core.xml
+
+# Addon components
+Components\Components.xml

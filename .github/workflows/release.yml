@@ -1,0 +1,30 @@
+name: Build Forever prerelease
+on:
+  push:
+    tags:
+      - '6.6.6-r*'
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Require a main branch release commit
+        run: git merge-base --is-ancestor HEAD origin/main
+      - name: Validate and build tracked addon snapshot
+        run: python scripts/build_release.py --tag "$GITHUB_REF_NAME"
+      - name: Publish alpha prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          name: DiabolicUI3 Forever ${{ github.ref_name }} Alpha
+          files: dist/DiabolicUI3-Forever.zip
+          body_path: dist/release-notes.md
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: true

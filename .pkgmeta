@@ -1,0 +1,34 @@
+package-as: DiabolicUI3
+
+manual-changelog: CHANGELOG.md
+
+ignore:
+  - TODO.md
+  - RELEASE_NOTES*.md
+  - CURSE_DESCRIPTION.html
+  - CHANGELOG_RELEASE.md
+  - .github
+  - .git
+  - .gitignore
+  - .pkgmeta
+  - .claude
+  - DiabolicUI3.rar
+  - Components/Misc/Disabled
+  - DEVELOPMENT.md
+  - API_CHANGES_12.0.0.md
+  - old
+  - logo
+  - Assets/ai
+  - AGENTS.md
+  - FOREVER_TESTING.md
+  - .idea
+  - .mcp.json
+  - scripts
+  - dist
+  - __pycache__
+  - "*.pyc"
+  - "Assets/**/*.psd"
+  - "*.tmp"
+  - "*.bak"
+
+enable-nolib-creation: no
