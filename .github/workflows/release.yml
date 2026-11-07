@@ -3,6 +3,14 @@ on:
   push:
     tags:
       - '6.6.6-r*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing Forever release tag
+        required: true
+        type: string
+env:
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
 permissions:
   contents: write
 jobs:
@@ -12,17 +20,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: refs/tags/${{ env.RELEASE_TAG }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Require a main branch release commit
         run: git merge-base --is-ancestor HEAD origin/main
       - name: Validate and build tracked addon snapshot
-        run: python scripts/build_release.py --tag "$GITHUB_REF_NAME"
+        run: python scripts/build_release.py --tag "$RELEASE_TAG"
       - name: Publish alpha prerelease
         uses: softprops/action-gh-release@v2
         with:
-          name: DiabolicUI3 Forever ${{ github.ref_name }} Alpha
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: DiabolicUI3 Forever ${{ env.RELEASE_TAG }} Alpha
           files: dist/DiabolicUI3-Forever.zip
           body_path: dist/release-notes.md
           prerelease: true
