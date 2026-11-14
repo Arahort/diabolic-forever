@@ -366,6 +366,25 @@ MinimapButtons.UpdateMainButtonSize = function(self)
 	end
 end
 -- Create main button
+MinimapButtons.UpdateStyle = function(self)
+	if not mainButton then return end
+	local stone = ns.IsForever and ns.db and ns.API.IsStoneStyle()
+	mainButton.border:SetTexture(stone and GetMedia("arahort-stone/button-circular", "png") or GetMedia("button-big-circular"))
+	if stone then mainButton.border:SetVertexColor(1, 1, 1) else mainButton.border:SetVertexColor(.8, .76, .72) end
+	mainButton.icon:SetTexture(stone and GetMedia("arahort-stone/collector-icon", "png") or [[Interface\Icons\INV_Misc_Bag_10]])
+	mainButton.icon:SetAlpha(.85)
+	if mainButton.stoneHighlight then mainButton.stoneHighlight:SetAlpha(stone and .12 or 0) end
+	if buttonContainer then
+		buttonContainer:SetBackdrop({
+			bgFile = [[Interface\ChatFrame\ChatFrameBackground]],
+			edgeFile = stone and GetMedia("arahort-stone/border-tooltip", "png") or GetMedia("border-tooltip"),
+			edgeSize = 12,
+			insets = { left = 3, right = 3, top = 7, bottom = 7 }
+		})
+		buttonContainer:SetBackdropColor(0, 0, 0, .5)
+		if stone then buttonContainer:SetBackdropBorderColor(1, 1, 1, 1) else buttonContainer:SetBackdropBorderColor(Colors.offwhite[1], Colors.offwhite[2], Colors.offwhite[3], .5) end
+	end
+end
 MinimapButtons.CreateMainButton = function(self)
 	if mainButton then return end
 	-- Get button size from settings
@@ -401,6 +420,17 @@ MinimapButtons.CreateMainButton = function(self)
 	icon:SetMask(GetMedia("actionbutton-mask-circular"))
 	icon:SetAlpha(.85)
 	mainButton.icon = icon
+	local highlight = mainButton:CreateTexture(nil, "HIGHLIGHT")
+	highlight:SetTexture(GetMedia("actionbutton-mask-circular"))
+	highlight:SetAllPoints(mainButton)
+	highlight:SetBlendMode("ADD")
+	highlight:SetAlpha(0)
+	mainButton:SetHighlightTexture(highlight)
+	mainButton.stoneHighlight = highlight
+	mainButton:SetScript("OnEnter", function()
+		if ns.IsForever and ns.API.IsStoneStyle() then mainButton.icon:SetAlpha(1) end
+	end)
+	mainButton:SetScript("OnLeave", function() mainButton.icon:SetAlpha(.85) end)
 	-- Click handler
 	mainButton:SetScript("OnClick", function()
 		self:ToggleContainer()
@@ -462,6 +492,8 @@ MinimapButtons.OnInitialize = function(self)
 	-- Create UI elements
 	self:CreateMainButton()
 	self:CreateContainer()
+	self:UpdateStyle()
+	ns.RegisterCallback(self, "OrbStyle_Updated", "UpdateStyle")
 	-- Set initial visibility
 	self:UpdateVisibility()
 end

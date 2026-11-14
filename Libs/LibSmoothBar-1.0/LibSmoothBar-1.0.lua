@@ -811,6 +811,7 @@ StatusBar.GetStatusBarTexture = function(self)
 	return Bars[self].bar
 end
 
+StatusBar.GetNativeStatusBar = function(self) return Bars[self].nativeStatusBar end
 StatusBar.GetAnchor = function(self) return Bars[self].bar end
 StatusBar.GetObjectType = function(self) return "StatusBar" end
 StatusBar.IsObjectType = function(self, type) return type == "SmartBar" or type == "StatusBar" or type == "Frame" end

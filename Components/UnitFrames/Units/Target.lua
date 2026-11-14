@@ -30,7 +30,7 @@ local GetMedia = ns.API.GetMedia
 -- to assure our smoothed elements are properly aligned.
 local Health_PostUpdate = function(element, unit, cur, max)
 	local predict = element.__owner.HealthPrediction
-	if (predict) then
+	if (predict and not predict.healingAll) then
 		predict:ForceUpdate()
 	end
 end
@@ -243,6 +243,7 @@ end
 
 -- Update artwork based on unit classification.
 local UpdateArtwork = function(self)
+	if ns.CathedralTarget and ns.CathedralTarget:UpdateArtwork(self) then return end
 	local unit = self.__unit
 	if (not unit) then
 		return
@@ -319,18 +320,22 @@ UnitStyles["Target"] = function(self, unit, id)
 
 	-- Health Prediction
 	--------------------------------------------
-	local healPredictFrame = CreateFrame("Frame", nil, health)
-	healPredictFrame:SetFrameLevel(health:GetFrameLevel() + 2)
-	healPredictFrame:SetAllPoints()
+	if ns.IsForever then
+		self.HealthPrediction = ns.API.CreateHorizontalHealthPrediction(health)
+	else
+		local healPredictFrame = CreateFrame("Frame", nil, health)
+		healPredictFrame:SetFrameLevel(health:GetFrameLevel() + 2)
+		healPredictFrame:SetAllPoints()
 
-	local healPredict = healPredictFrame:CreateTexture(health:GetName().."Prediction", "OVERLAY")
-	healPredict:SetTexture(GetMedia("target-bar-normal-diabolic"))
-	healPredict.health = health
-	healPredict.preview = preview
-	healPredict.maxOverflow = 1
+		local healPredict = healPredictFrame:CreateTexture(health:GetName().."Prediction", "OVERLAY")
+		healPredict:SetTexture(GetMedia("target-bar-normal-diabolic"))
+		healPredict.health = health
+		healPredict.preview = preview
+		healPredict.maxOverflow = 1
 
-	self.HealthPrediction = healPredict
-	self.HealthPrediction.PostUpdate = HealPredict_PostUpdate
+		self.HealthPrediction = healPredict
+		self.HealthPrediction.PostUpdate = HealPredict_PostUpdate
+	end
 
 	-- Health Value
 	--------------------------------------------
@@ -385,6 +390,7 @@ UnitStyles["Target"] = function(self, unit, id)
 
 	local cast = CreateFrame("StatusBar", self:GetName().."Castbar", self)
 	cast:SetSize(CAST_WIDTH, CAST_HEIGHT)
+	if ns.IsForever then cast:SetScale(.88) end
 	cast:SetPoint("TOP", self, "BOTTOM", 0, -10)
 	cast:SetFrameLevel(health:GetFrameLevel() + 4)
 	cast:SetStatusBarTexture(GetMedia("statusbar/Heath-Bar"))
@@ -416,6 +422,9 @@ UnitStyles["Target"] = function(self, unit, id)
 	castIconBorder:SetSize(CAST_ICON_SIZE + CAST_BORDER_PAD_X, CAST_ICON_SIZE + CAST_BORDER_PAD_Y)
 	castIconBorder:SetPoint("CENTER", castIcon, "CENTER", 0, 0)
 	castIconBorder:SetTexture(GetMedia("statusbar/Health-Bar-Border2"))
+	cast.DiabolicBackground = castBack
+	cast.DiabolicBorder = castBorder
+	cast.DiabolicIconBorder = castIconBorder
 
 	-- "Cannot interrupt" shield (copied from Platynator). oUF shows/hides it
 	-- automatically on protected casts via Shield:SetAlphaFromBoolean(notInterruptible).
@@ -536,24 +545,19 @@ UnitStyles["Target"] = function(self, unit, id)
 		if (uf and uf.showTargetCastbar ~= nil) then show = uf.showTargetCastbar end
 		local aboveName = uf and uf.showTargetCastbarAboveName
 		local cast = self.Castbar
-		cast:ClearAllPoints()
-		self.Auras:ClearAllPoints()
-		if (show and aboveName) then
-			-- WoW 12.1: the unit name is a secret string, so the name font string has
-			-- secret anchors, and anything anchored to it inherits that. The cast bar
-			-- would then report a secret width, which breaks the empower stage pips.
-			-- It hangs off the frame itself instead, cleared by the name's line height.
-			local _, nameFontSize = self.Name:GetFont()
-			cast:SetPoint("BOTTOM", self, "TOP", 0, 8 + (nameFontSize or 16))
-			self.Auras:SetPoint("TOP", self, "BOTTOM", 0, -12)
-		elseif (show) then
-			cast:SetPoint("TOP", self, "BOTTOM", 0, -10)
-			self.Auras:SetPoint("TOP", cast, "BOTTOM", 0, -14)
-		else
-			cast:SetPoint("TOP", self, "BOTTOM", 0, -10)
-			self.Auras:SetPoint("TOP", self, "BOTTOM", 0, -12)
-			if (cast:IsShown() and not self.castbarPreviewActive) then
-				cast:Hide()
+		local stoneLayout = ns.CathedralTarget and ns.CathedralTarget:LayoutTarget(self, show, aboveName)
+		if not stoneLayout then
+			cast:ClearAllPoints()
+			self.Auras:ClearAllPoints()
+			if show and aboveName then
+				-- Anchor to the frame so secret name bounds never affect the cast bar.
+				local _, nameFontSize = self.Name:GetFont()
+				cast:SetPoint("BOTTOM", self, "TOP", 0, 8 + (nameFontSize or 16))
+				self.Auras:SetPoint("TOP", self, "BOTTOM", 0, -12)
+			else
+				cast:SetPoint("TOP", self, "BOTTOM", 0, -10)
+				if show then self.Auras:SetPoint("TOP", cast, "BOTTOM", 0, -14)
+				else self.Auras:SetPoint("TOP", self, "BOTTOM", 0, -12) end
 			end
 		end
 		self:RefreshCastbarPreview()
@@ -585,10 +589,16 @@ UnitStyles["Target"] = function(self, unit, id)
 			cast:SetMinMaxValues(0, 1)
 			cast:SetValue(0.66)
 			cast:Show()
-		elseif (self.castbarPreviewActive) then
-			self.castbarPreviewActive = nil
-			self:EnableElement("Castbar")
-			cast:Hide()
+		else
+			if self.castbarPreviewActive then
+				self.castbarPreviewActive = nil
+				self:EnableElement("Castbar")
+			end
+			if not show then
+				cast:Hide()
+			elseif cast.ForceUpdate and self:IsElementEnabled("Castbar") then
+				cast:ForceUpdate()
+			end
 		end
 	end
 	self.ShowCastbarPreview = function(self)
@@ -599,6 +609,7 @@ UnitStyles["Target"] = function(self, unit, id)
 		self.inEditMode = nil
 		self:RefreshCastbarPreview()
 	end
+	if ns.CathedralTarget then ns.CathedralTarget:InstallTarget(self) end
 	self:UpdateTargetCastbar()
 	ns.RegisterCallback(self, "UnitFrames_Settings_Updated", "UpdateTargetCastbar")
 

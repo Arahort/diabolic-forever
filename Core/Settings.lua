@@ -42,6 +42,8 @@ local function OnSettingChanged(_, setting, value)
 		ns.callbacks:Fire("Aura_Settings_Updated")
 	elseif variable:match("^global_castbar_") then
 		ns.callbacks:Fire("Castbar_Settings_Updated")
+	elseif variable == "global_damageMeter_useCustomStyle" then
+		StaticPopup_Show("DIABOLICUI3_RELOAD_UI")
 	elseif variable:match("^global_unitframes_") then
 		ns.callbacks:Fire("UnitFrames_Settings_Updated")
 	elseif variable:match("^char_target_") then
@@ -61,6 +63,8 @@ local function OnSettingChanged(_, setting, value)
 	end
 end
 local function RegisterSetting(category, key, path, name, defaultValue, tooltip)
+	local configuredDefault = ns:GetDefaultSetting(path, key)
+	if configuredDefault ~= nil then defaultValue = configuredDefault end
 	local variable = path:gsub("%.", "_") .. "_" .. key
 	local db = ns.db
 	if not db then return end
@@ -208,19 +212,51 @@ SettingsModule.OnInitialize = function(self)
 		local catOrbs, layoutOrbs = Settings.RegisterVerticalLayoutSubcategory(category, "|T5094560:14:14|t  " .. L["OrbsHeader"])
 		AddApplyButton(layoutOrbs)
 		do
-			local setting = RegisterSetting(
-				catOrbs,
-				"useD2RStyle",
-				"global.orbs",
-				L["UseD2ROrbStyle"],
-				true,
-				L["UseD2ROrbStyleDesc"]
-			)
-			local OnOrbStyleChanged = function()
-				StaticPopup_Show("DIABOLICUI3_RELOAD_UI")
+			local pendingStyle
+			local styleQueue = CreateFrame("Frame")
+			local SetOrbStyle
+			SetOrbStyle = function(value)
+				if value ~= "legacy" and value ~= "diablo2" and value ~= "arahort-stone" and value ~= "arahort-stone-dark" and value ~= "succubus" then return end
+				local current = ns.db.global.orbs.style
+				if ns.IsForever and value ~= current and InCombatLockdown() and (ns.API.IsStoneStyle(value) or ns.API.IsStoneStyle(current)) then
+					pendingStyle = value
+					styleQueue:RegisterEvent("PLAYER_REGEN_ENABLED")
+					return
+				end
+				pendingStyle = nil
+				styleQueue:UnregisterEvent("PLAYER_REGEN_ENABLED")
+				if value == current then return end
+				ns.db.global.orbs.style = value
+				ns.db.global.orbs.useD2RStyle = value ~= "legacy"
+				ns.db.global.orbs.eyeGlowD2R = true
+				ns.db.global.orbs.actionBarsGlow = true
+				ns.callbacks:Fire("OrbStyle_Updated")
+				ns.callbacks:Fire("ActionBarsGlow_Updated")
 			end
-			Settings.SetOnValueChangedCallback("global_orbs_useD2RStyle", OnOrbStyleChanged)
-			CreateCheckbox(catOrbs, setting, L["UseD2ROrbStyleDesc"])
+			styleQueue:SetScript("OnEvent", function()
+				if pendingStyle then SetOrbStyle(pendingStyle) end
+			end)
+			local setting = Settings.RegisterProxySetting(
+				catOrbs,
+				"global_orbs_style",
+				"string",
+				L["OrbStyle"],
+				ns:GetDefaultSetting("global.orbs", "style") or "diablo2",
+				function() return pendingStyle or ns.db.global.orbs.style end,
+				SetOrbStyle
+			)
+			if setting and Settings.CreateDropdown then
+				local function GetOptions()
+					local container = Settings.CreateControlTextContainer()
+					container:Add("legacy", "Legacy")
+					container:Add("diablo2", "Diablo 2")
+					container:Add("arahort-stone", "Stone Light")
+					container:Add("arahort-stone-dark", "Stone Dark")
+					container:Add("succubus", "Succubus")
+					return container:GetData()
+				end
+				Settings.CreateDropdown(catOrbs, setting, GetOptions, L["OrbStyleDesc"])
+			end
 		end
 		do
 			local setting = RegisterSetting(
@@ -236,35 +272,6 @@ SettingsModule.OnInitialize = function(self)
 			end
 			Settings.SetOnValueChangedCallback("char_orbs_useCustomColors", OnCustomColorsChanged)
 			CreateCheckbox(catOrbs, setting, L["UseCustomOrbColorsDesc"])
-		end
-		do
-			local setting = RegisterSetting(
-				catOrbs,
-				"eyeGlowD2R",
-				"global.orbs",
-				L["EyeGlowD2R"],
-				false,
-				L["EyeGlowD2RDesc"]
-			)
-			local OnEyeGlowChanged = function()
-				ns.callbacks:Fire("OrbEyeGlow_Updated")
-			end
-			Settings.SetOnValueChangedCallback("global_orbs_eyeGlowD2R", OnEyeGlowChanged)
-			CreateCheckbox(catOrbs, setting, L["EyeGlowD2RDesc"])
-		end
-		do
-			local setting = RegisterSetting(
-				catOrbs,
-				"actionBarsGlow",
-				"global.orbs",
-				L["ActionBarsGlow"],
-				true,
-				L["ActionBarsGlowDesc"]
-			)
-			Settings.SetOnValueChangedCallback("global_orbs_actionBarsGlow", function()
-				ns.callbacks:Fire("ActionBarsGlow_Updated")
-			end)
-			CreateCheckbox(catOrbs, setting, L["ActionBarsGlowDesc"])
 		end
 		do
 			local function CreateColorSwatch(key, labelKey, descKey, defaultColor)
@@ -366,26 +373,44 @@ SettingsModule.OnInitialize = function(self)
 		local catBars, layoutBars = Settings.RegisterVerticalLayoutSubcategory(category, "|T" .. actionBarsIcon .. ":14:14|t  " .. L["ActionBarsHeader"])
 		AddApplyButton(layoutBars)
 		do
-			local setting = RegisterSetting(
+			local pendingCount
+			local SetBarCount
+			SetBarCount = function(value)
+				if value ~= 1 and value ~= 2 and value ~= 3 then return end
+				if InCombatLockdown() then
+					pendingCount = value
+					SettingsModule:RegisterEvent("PLAYER_REGEN_ENABLED", function() SetBarCount(pendingCount) end)
+					return
+				end
+				pendingCount = nil
+				SettingsModule:UnregisterEvent("PLAYER_REGEN_ENABLED")
+				ns.db.char.actionbars.enableSecondary = value >= 2
+				ns.db.char.actionbars.enableThird = value == 3
+				ns.callbacks:Fire("ActionBar_Settings_Updated")
+			end
+			local setting = Settings.RegisterProxySetting(
 				catBars,
-				"enableSecondary",
-				"char.actionbars",
-				L["EnableSecondary"],
-				true,
-				L["EnableSecondaryDesc"]
+				"char_actionbars_barCount",
+				"number",
+				L["ActionBarCount"],
+				ns:GetDefaultSetting("char.actionbars", "enableThird") and 3 or (ns:GetDefaultSetting("char.actionbars", "enableSecondary") and 2 or 1),
+				function()
+					if pendingCount then return pendingCount end
+					local bars = ns.db.char.actionbars
+					return bars.enableThird and 3 or bars.enableSecondary and 2 or 1
+				end,
+				SetBarCount
 			)
-			CreateCheckbox(catBars, setting, L["EnableSecondaryDesc"])
-		end
-		do
-			local setting = RegisterSetting(
-				catBars,
-				"enableThird",
-				"char.actionbars",
-				L["EnableThird"] or "Enable Third ActionBar",
-				false,
-				L["EnableThirdDesc"] or "Toggle the third action bar"
-			)
-			CreateCheckbox(catBars, setting, L["EnableThirdDesc"] or "Toggle the third action bar")
+			if setting and Settings.CreateDropdown then
+				local function GetOptions()
+					local container = Settings.CreateControlTextContainer()
+					container:Add(1, L["ActionBarCountOne"])
+					container:Add(2, L["ActionBarCountTwo"])
+					container:Add(3, L["ActionBarCountThree"])
+					return container:GetData()
+				end
+				Settings.CreateDropdown(catBars, setting, GetOptions, L["ActionBarCountDesc"])
+			end
 		end
 		do
 			local setting = RegisterSetting(
@@ -409,17 +434,6 @@ SettingsModule.OnInitialize = function(self)
 				L["UsePetOrbStyleDesc"]
 			)
 			Settings.CreateCheckbox(catBars, setting, L["UsePetOrbStyleDesc"])
-		end
-		do
-			local setting = RegisterSetting(
-				catBars,
-				"useExtendedBars",
-				"char.actionbars",
-				L["UseExtendedBars"],
-				false,
-				L["UseExtendedBarsDesc"]
-			)
-			CreateCheckbox(catBars, setting, L["UseExtendedBarsDesc"])
 		end
 		do
 			local setting = RegisterSetting(
@@ -583,7 +597,21 @@ SettingsModule.OnInitialize = function(self)
 		--------------------------------------------
 		local catUF, layoutUF = Settings.RegisterVerticalLayoutSubcategory(category, "|T341221:14:14|t  " .. L["UnitFramesHeader"])
 		AddApplyButton(layoutUF)
-		do
+		if ns.IsForever then
+			local meterSetting = RegisterSetting(catUF, "useCustomStyle", "global.damageMeter", L["CustomDamageMeterStyle"], true, L["CustomDamageMeterStyleDesc"])
+			CreateCheckbox(catUF, meterSetting, L["CustomDamageMeterStyleDesc"])
+		end
+		if ns.IsForever then
+			local orbSetting = RegisterSetting(catUF, "comboOnOrb", "char.unitframes", L["ComboPointsOnOrb"], true, L["ComboPointsOnOrbDesc"])
+			CreateCheckbox(catUF, orbSetting, L["ComboPointsOnOrbDesc"])
+			local resourceSetting = RegisterSetting(catUF, "comboOnResourceOrb", "char.unitframes", L["ComboPointsOnResourceOrb"], true, L["ComboPointsOnResourceOrbDesc"])
+			local resourceCheckbox = CreateCheckbox(catUF, resourceSetting, L["ComboPointsOnResourceOrbDesc"])
+			resourceCheckbox:AddModifyPredicate(function() return ns.db.char.unitframes.comboOnOrb end)
+			local targetSetting = RegisterSetting(catUF, "comboOnTarget", "char.unitframes", L["ComboPointsOnTarget"], true, L["ComboPointsOnTargetDesc"])
+			local targetCheckbox = CreateCheckbox(catUF, targetSetting, L["ComboPointsOnTargetDesc"])
+			targetCheckbox:AddModifyPredicate(function() return ns.API.IsStoneStyle() end)
+		end
+		if not ns.IsForever then
 			local setting = RegisterSetting(
 				catUF,
 				"useClassColorForPower",
@@ -1172,7 +1200,9 @@ SettingsModule.OnInitialize = function(self)
 			end
 			Header("About")
 			local version = (C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata)("DiabolicUI3", "Version") or "?"
-			local wowVersion = select(1, GetBuildInfo()) or "?"
+			local wowVersion, wowBuild = GetBuildInfo()
+			wowVersion = wowVersion or "?"
+			if ns.IsForever then wowVersion = "Forever " .. wowVersion .. " (" .. (wowBuild or "?") .. ")" end
 			Line("|cffaaaaaa" .. "Version: " .. version .. "    |cff888888WoW: " .. wowVersion .. "|r", "GameFontNormal", 2)
 			Line("This is a community-maintained fork of the original Diabolic UI")
 			Line("by Lars \"Goldpaw\" Norberg.", nil, 2)
@@ -1181,7 +1211,7 @@ SettingsModule.OnInitialize = function(self)
 			Line("Code & Artwork: Lars \"Goldpaw\" Norberg")
 			Gap()
 			Label("This Fork")
-			Line("Updated for WoW 11.x and 12.x by: Alex Arahort")
+			Line(ns.IsForever and "Adapted for WoW Forever by: Alex Arahort" or "Updated for WoW 11.x and 12.x by: Alex Arahort")
 			Line("Artwork: Alex Arahort and Karina Kisenkova", nil, 2)
 			Gap()
 			Label("Third-Party Libraries")
@@ -1195,7 +1225,7 @@ SettingsModule.OnInitialize = function(self)
 			Gap()
 			LinkButton("Patreon", "https://www.patreon.com/c/Arahort")
 			LinkButton("Boosty", "https://boosty.to/alex_arahort")
-			LinkButton("GitHub", "https://github.com/Arahort/diabolic")
+			LinkButton("GitHub", ns.IsForever and "https://github.com/Arahort/diabolic-forever" or "https://github.com/Arahort/diabolic")
 			LinkButton("Discord", "https://discord.com/channels/407765646634385408/1478671797695025272")
 			Gap()
 			Label("Crypto")

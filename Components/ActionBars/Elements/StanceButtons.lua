@@ -18,18 +18,31 @@ local Colors = ns.Colors
 local GetMedia = ns.API.GetMedia
 -- Styled buttons cache
 local styledButtons = {}
+StanceButtons.ApplyButtonStyle = function(self, button)
+	local border = button and button.__diabolicBorder
+	if not border then return end
+	local stone = ns.IsForever and ns.db and ns.API.IsStoneStyle()
+	border:SetBackdrop({ edgeFile = stone and GetMedia("arahort-stone/border-aura", "png") or GetMedia("border-aura"), edgeSize = 12 })
+	if stone then
+		border:SetBackdropBorderColor(1, 1, 1)
+	else
+		border:SetBackdropBorderColor(Colors.verydarkgray[1], Colors.verydarkgray[2], Colors.verydarkgray[3])
+	end
+end
+StanceButtons.UpdateStyle = function(self)
+	for button in pairs(styledButtons) do self:ApplyButtonStyle(button) end
+end
 StanceButtons.StyleButton = function(self, button)
 	if not button then return end
 	if styledButtons[button] then return end
 	styledButtons[button] = true
 	-- Add border frame like auras
 	local border = CreateFrame("Frame", nil, button, ns.BackdropTemplate)
-	border:SetBackdrop({ edgeFile = GetMedia("border-aura"), edgeSize = 12 })
-	border:SetBackdropBorderColor(Colors.verydarkgray[1], Colors.verydarkgray[2], Colors.verydarkgray[3])
 	border:SetPoint("TOPLEFT", -6, 6)
 	border:SetPoint("BOTTOMRIGHT", 6, -6)
 	border:SetFrameLevel(button:GetFrameLevel() + 2)
 	button.__diabolicBorder = border
+	self:ApplyButtonStyle(button)
 	-- Slightly darken the icon
 	if button.icon then
 		button.icon:SetVertexColor(.85, .85, .85)
@@ -61,4 +74,5 @@ StanceButtons.OnEnable = function(self)
 	-- Re-style when forms change
 	self:RegisterEvent("UPDATE_SHAPESHIFT_FORMS", "StyleAllButtons")
 	self:RegisterEvent("PLAYER_ENTERING_WORLD", "StyleAllButtons")
+	ns.RegisterCallback(self, "OrbStyle_Updated", "UpdateStyle")
 end

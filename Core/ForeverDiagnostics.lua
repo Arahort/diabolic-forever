@@ -25,6 +25,15 @@ local function read(object, method, ...)
 	if ok then return value(result) end
 	return "<unreadable>"
 end
+local function layoutConstraints(object)
+	if not object then return { exists = false } end
+	local ok, protected, explicit = pcall(object.IsProtected, object)
+	if not ok then protected, explicit = "<unavailable>", "<unavailable>" end
+	return {
+		exists = true, protected = value(protected), explicit = value(explicit),
+		anchoringRestricted = read(object, "IsAnchoringRestricted"), forbidden = read(object, "HasAnyForbiddenAspects"), accessConstraints = read(object, "HasAccessConstraints")
+	}
+end
 local function inspect(object)
 	if not object then return { exists = false } end
 	local state = {
@@ -85,23 +94,122 @@ local function capabilities()
 		stringUtil = C_StringUtil and type(C_StringUtil.TruncateWhenZero) == "function" or false
 	}
 end
-local function security(owner, key)
-	if not owner or type(owner[key]) ~= "function" or type(issecurevariable) ~= "function" then return { available = false } end
+local function variableSecurity(owner, key)
+	if not owner or type(issecurevariable) ~= "function" then return { available = false } end
 	local ok, secure, source = pcall(issecurevariable, owner, key)
 	return { available = ok, secure = value(secure), source = value(source) }
+end
+local function security(owner, key)
+	if not owner or type(owner[key]) ~= "function" then return { available = false } end
+	return variableSecurity(owner, key)
+end
+local function tableField(owner, key)
+	if type(owner) ~= "table" then return end
+	local field = rawget(owner, key)
+	if issecretvalue and issecretvalue(field) then return end
+	if type(field) == "table" and (not canaccesstable or canaccesstable(field)) then return field end
+end
+local function fieldSecurity(owner, keys)
+	local state = { exists = owner ~= nil }
+	if not owner then return state end
+	for _, key in ipairs(keys) do state[key] = variableSecurity(owner, key) end
+	return state
+end
+local function callbackSecurity(owner)
+	local state = {}
+	local tables = tableField(owner, "callbackTables")
+	for kind = 1, 2 do
+		local events = tableField(tables, kind)
+		state[kind] = {}
+		for event in pairs(events or {}) do
+			if not (issecretvalue and issecretvalue(event)) and type(event) == "string" then
+				local callbacks = tableField(events, event)
+				local info = { field = variableSecurity(events, event), callbacks = {} }
+				for callbackOwner in pairs(callbacks or {}) do
+					-- issecurevariable accepts string keys; numeric keys are coerced to strings.
+					if not (issecretvalue and issecretvalue(callbackOwner)) then
+						info.callbacks[#info.callbacks + 1] = type(callbackOwner) == "string" and variableSecurity(callbacks, callbackOwner) or { available = false, keyType = type(callbackOwner) }
+					end
+				end
+				state[kind][event] = info
+			end
+		end
+	end
+	return state
+end
+local function nativeTaintState()
+	-- Inspect provenance only: never invoke refresh/layout callbacks or copy combat values.
+	local state = {
+		manager = fieldSecurity(EditModeManagerFrame, { "editModeActive", "editModeSystemAnchorDirty", "registeredSystemFrames", "OnShow", "OnHide", "EnterEditMode", "ExitEditMode", "onCloseCallback" }),
+		meter = fieldSecurity(DamageMeter, { "isEditing", "visibility", "windowDataList", "OnEvent", "OnEditModeExit", "UpdateShownState" }),
+		castingBar = fieldSecurity(PlayerCastingBarFrame, { "showCastTimeSetting", "isManagedFrame", "isBottomManagedFrame", "isInEditMode", "casting", "channeling", "attachedToPlayerFrame" }),
+		player = fieldSecurity(PlayerFrame, { "unit" }), auras = {}, windows = {}
+	}
+	local systems = tableField(EditModeManagerFrame, "registeredSystemFrames")
+	state.systemEntries = {}
+	for index = 1, systems and #systems or 0 do
+		state.systemEntries[index] = fieldSecurity(tableField(systems, index), { "OnEditModeExit", "isSelected", "isHighlighted", "isInEditMode", "snappedFrames", "systemInfo" })
+	end
+	for _, name in ipairs({ "BuffFrame", "DebuffFrame", "ExternalDefensivesFrame" }) do
+		local owner = tableField(_G, name)
+		local aura = fieldSecurity(owner, { "isInEditMode", "auraFrames", "AuraContainer", "OnShow", "OnHide", "OnEditModeExit", "SetIsEditing", "Update" })
+		aura.container = fieldSecurity(tableField(owner, "AuraContainer"), { "GetAuraWarningAlphaForDuration", "auraWarningMaxAlpha", "WarningFader" })
+		aura.buttons = {}
+		local buttons = tableField(owner, "auraFrames")
+		for index = 1, buttons and #buttons or 0 do
+			local button = tableField(buttons, index)
+			local fields = fieldSecurity(button, { "isExample", "auraType", "buttonInfo", "timeLeft", "OnUpdate", "Update", "CalculateTimeLeft" })
+			fields.info = fieldSecurity(tableField(button, "buttonInfo"), { "count", "expirationTime", "timeMod" })
+			aura.buttons[index] = fields
+		end
+		state.auras[name] = aura
+	end
+	local function inspectWindow(window)
+		local info = fieldSecurity(window, { "isEditing", "sessionType", "sessionID", "OnShow", "OnHide", "OnEvent", "Refresh", "SetSessionDuration", "SetupEntry" })
+		local container = tableField(window, "MinimizeContainer") or window
+		local scrollBox = tableField(container, "ScrollBox")
+		local view = tableField(scrollBox, "view")
+		info.scrollBox = fieldSecurity(scrollBox, { "view", "updateLock", "Update", "FullUpdate", "OnViewDataChanged", "callbackTables", "executingEvents" })
+		info.view = fieldSecurity(view, { "dataProvider", "frames", "initializers", "elementFactory", "factory", "InvokeInitializers", "callbackTables", "executingEvents" })
+		info.scrollBox.callbacks = callbackSecurity(scrollBox)
+		info.view.callbacks = callbackSecurity(view)
+		info.entries = {}
+		local rows = tableField(view, "frames")
+		local function inspectEntry(entry)
+			return fieldSecurity(entry, { "isClassColorDesired", "style", "numberDisplayType", "sourceName", "nameText", "specIconID", "sessionTotalValue", "GetIconAtlasElement", "UpdateValue" })
+		end
+		for index = 1, rows and #rows or 0 do info.entries[index] = inspectEntry(tableField(rows, index)) end
+		info.localPlayerEntry = inspectEntry(tableField(container, "LocalPlayerEntry"))
+		return info, tableField(container, "SourceWindow")
+	end
+	local windows = tableField(DamageMeter, "windowDataList")
+	for index = 1, 3 do
+		local window = tableField(tableField(windows, index), "sessionWindow")
+		if window then
+			local info, source = inspectWindow(window)
+			if source then info.source = inspectWindow(source) end
+			state.windows[index] = info
+		end
+	end
+	return state
 end
 local function snapshot(reason)
 	local state = {
 		time = time(), reason = reason, combat = InCombatLockdown(),
 		libraries = libraryVersions(), capabilities = capabilities(), frames = {}, fallbacks = {}
 	}
+	state.taintLog = value(C_CVar.GetCVar("taintLog"))
 	state.actionBarsSettingsIcon = value(ns.ForeverActionBarsSettingsIcon)
+	if reason == "manual" or reason == "taint-capture-started" or reason == "taint-capture-ended" then state.nativeTaint = nativeTaintState() end
 	state.taintSources = {
 		auraWarning = security(AuraContainerMixin, "GetAuraWarningAlphaForDuration"),
 		auraFrameWarning = security(BuffFrame and BuffFrame.AuraContainer, "GetAuraWarningAlphaForDuration"),
 		damageIcon = security(DamageMeterSourceEntryMixin, "GetIconAtlasElement"),
 		damageTexture = security(DamageMeterEntryMixin, "GetIconTexture"),
 		damageTimer = security(DamageMeterSessionWindowMixin, "SetSessionDuration"),
+		damageName = security(DamageMeterEntryMixin, "UpdateName"),
+		editModeAnchorDirty = variableSecurity(EditModeManagerFrame, "editModeSystemAnchorDirty"),
+		editModeSystems = variableSecurity(EditModeManagerFrame, "registeredSystemFrames"),
 		fontScaling = security(ShrinkUntilTruncateFontStringMixin, "ApplyFontObjects"),
 		addonLoader = security(C_AddOns, "LoadAddOn")
 	}
@@ -151,6 +259,15 @@ local function snapshot(reason)
 	end
 	state.frames.PlayerUnitFrame = inspect(player)
 	state.frames.TargetUnitFrame = inspect(_G.DiabolicUnitFrameTarget)
+	local target = _G.DiabolicUnitFrameTarget
+	local layout = target and target.Cathedral and target.Cathedral.layout
+	if layout then
+		state.targetAuraLayout = {
+			anchor = layoutConstraints(layout.anchor), castDock = layoutConstraints(layout.castDock), auraDock = layoutConstraints(layout.auraDock), auras = layoutConstraints(target.Auras),
+			presentation = ns.ForeverNativeFallbacks.targetAuraLayout,
+			unitExistsState = read(layout.anchor, "GetAttribute", "state-unitexists"), combatState = read(layout.anchor, "GetAttribute", "state-combat"), preview = read(layout.anchor, "GetAttribute", "layout-preview")
+		}
+	end
 	state.frames.QuestControl = inspect(_G.OverrideActionBar)
 	for key, fallback in pairs(ns.ForeverNativeFallbacks) do state.fallbacks[value(key)] = value(fallback) end
 	if ns.db then
@@ -206,15 +323,19 @@ for _, event in ipairs({ "ADDON_LOADED", "PLAYER_ENTERING_WORLD", "PLAYER_LOGOUT
 SLASH_DIABOLICFOREVER1 = "/diabolicforever"
 SlashCmdList.DIABOLICFOREVER = function(command)
 	if not active then return end
-	command = string.lower(command or "")
+	command = string.lower(string.match(command or "", "^%s*(.-)%s*$"))
 	if command == "taint" then
 		if not taintOriginal then taintOriginal = C_CVar.GetCVar("taintLog") or "0" end
 		C_CVar.SetCVar("taintLog", "2")
-		print("DiabolicUI Forever: reproduce the issue, then /diabolicforever taintstop and /reload. Native details are saved in Logs/taint.log.")
+		diagnostics:Record("taint-capture-started")
+		print("DiabolicUI Forever: taintLog="..tostring(C_CVar.GetCVar("taintLog"))..". Reproduce the issue now, then /diabolicforever taintstop and /reload. Native details are saved in Logs/taint.log.")
 		return
 	elseif command == "taintstop" then
-		if taintOriginal then C_CVar.SetCVar("taintLog", taintOriginal); taintOriginal = nil end
+		C_CVar.SetCVar("taintLog", "0")
+		taintOriginal = nil
 		diagnostics:Record("taint-capture-ended")
+		local current = C_CVar.GetCVar("taintLog") or "<unavailable>"
+		print("DiabolicUI Forever: "..(current == "0" and "taint capture stopped" or "could not stop taint capture").."; taintLog="..current..". /reload saves diagnostics.")
 		return
 	elseif command == "stop" then
 		DiabolicUI3_ForeverLog.enabled = false

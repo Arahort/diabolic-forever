@@ -703,6 +703,11 @@ MinimapMod.HideBlizzardZoneFrames = function(self)
 		MinimapZoneText:SetAlpha(0)
 	end
 end
+MinimapMod.UpdateBorderStyle = function(self)
+	if not self.border then return end
+	local stone = ns.IsForever and ns.API.IsStoneStyle()
+	self.border:SetTexture(stone and GetMedia("arahort-stone/minimap-border", "png") or GetMedia("minimap-border"))
+end
 MinimapMod.StyleMinimap = function(self)
 
 	SetObjectScale(MinimapCluster)
@@ -727,7 +732,8 @@ MinimapMod.StyleMinimap = function(self)
 	local border = Minimap:CreateTexture(nil, "OVERLAY", nil, 0)
 	border:SetPoint("CENTER")
 	border:SetSize(340,340)
-	border:SetTexture(GetMedia("minimap-border"))
+	self.border = border
+	self:UpdateBorderStyle()
 
 	-- Custom Widgets
 	--------------------------------------------------------
@@ -1055,6 +1061,7 @@ MinimapMod.OnInitialize = function(self)
 
 	self:DisableBlizzard()
 	self:StyleMinimap()
+	if ns.IsForever and ns.RegisterCallback then ns.RegisterCallback(self, "OrbStyle_Updated", "UpdateBorderStyle") end
 	self:UpdatePosition()
 	self:UpdateSize()
 	if ns.IsForever then
@@ -1116,13 +1123,13 @@ MinimapMod.OnInitialize = function(self)
 			db.positionPoint = point
 			db.positionX = x
 			db.positionY = y
-		end, {point = "TOPRIGHT", x = -30, y = -40})
+		end, ns:GetDefaultPosition("char.minimap"))
 		local minimapSettings = {
 			{
 				kind = LibEditMode.SettingType.Slider,
 				name = L["MinimapScale"],
 				desc = L["MinimapScaleDesc"],
-				default = 0.9,
+				default = ns:GetDefaultSetting("char.minimap", "minimapScale"),
 				minValue = 0.75,
 				maxValue = 1.25,
 				valueStep = 0.05,
@@ -1153,7 +1160,7 @@ MinimapMod.OnInitialize = function(self)
 				kind = LibEditMode.SettingType.Slider,
 				name = L["MinimapXPRingThickness"],
 				desc = L["MinimapXPRingThicknessDesc"],
-				default = 5.8,
+				default = ns:GetDefaultSetting("global.minimap", "xpRingThickness"),
 				minValue = 0.5,
 				maxValue = 12,
 				valueStep = 0.1,
@@ -1168,7 +1175,7 @@ MinimapMod.OnInitialize = function(self)
 				kind = LibEditMode.SettingType.Slider,
 				name = L["MinimapXPRingTransparency"],
 				desc = L["MinimapXPRingTransparencyDesc"],
-				default = 50,
+				default = ns:GetDefaultSetting("global.minimap", "xpRingTransparency"),
 				minValue = 0,
 				maxValue = 100,
 				valueStep = 1,

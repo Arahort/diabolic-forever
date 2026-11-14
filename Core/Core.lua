@@ -11,14 +11,13 @@ ns.PetHider:SetAllPoints()
 ns.PetHider:SetFrameStrata("LOW")
 RegisterStateDriver(ns.PetHider, "visibility", "[petbattle] hide; show")
 
--- Default settings
--- *don't modify these as they only
---  affect clean installs or new characters,
---  and the modules expect these defaults.
+-- Defaults for clean installs and new characters.
+-- Existing saved settings take precedence.
 local defaults = {
 	char = {
 		actionbars = {
 			enableSecondary = true,
+			enableThird = false,
 			showPetBar = true,
 			showStanceBar = false,
 			showBlizzardBar5 = false,
@@ -38,14 +37,14 @@ local defaults = {
 		},
 		minimap = {
 			positionPoint = "TOPRIGHT",
-			positionX = -30,
-			positionY = -40,
-			minimapScale = 0.9
+			positionX = -30.18734088928759,
+			positionY = -17.61291466999128,
+			minimapScale = 1.05
 		},
 		micromenu = {
 			positionPoint = "BOTTOMRIGHT",
-			positionX = -11,
-			positionY = 11
+			positionX = -492.9726030012193,
+			positionY = -16.37549781799316
 		},
 		tooltips = {
 			enabled = true,
@@ -58,7 +57,10 @@ local defaults = {
 		},
 		unitframes = {
 			useClassColorForPower = false,
-			showOnlyMyDebuffs = true
+			showOnlyMyDebuffs = true,
+			comboOnOrb = true,
+			comboOnResourceOrb = true,
+			comboOnTarget = true
 		},
 		orbs = {
 			useCustomColors = false,
@@ -67,8 +69,12 @@ local defaults = {
 			use3DModel = false,
 			healthModelID = 1041899,
 			powerModelID = 2030216,
-			healthAnimSpeed = 1,
-			powerAnimSpeed = 1
+			healthAnimSpeed = 0.1,
+			powerAnimSpeed = 0.1,
+			succubusArtworkX = -6,
+			succubusArtworkY = -4,
+			succubusButtonsX = -65,
+			succubusButtonsY = 0
 		},
 		mapcoords = {
 			worldmapCursor = true,
@@ -78,12 +84,12 @@ local defaults = {
 		},
 		minimapbuttons = {
 			enabled = true,
-			collectMailAndTracking = false,
+			collectMailAndTracking = true,
 			direction = "leftdown",
 			buttonsPerRow = 5,
-			autohide = 2,
+			autohide = 5,
 			mainButtonSize = 30,
-			buttonScale = 0.9,
+			buttonScale = 1,
 			blacklist = {}
 		},
 		pet = {
@@ -107,45 +113,47 @@ local defaults = {
 			scale = 1.0
 		},
 		target = {
-			positionPoint = "TOP",
-			positionX = 0,
-			positionY = -95,
-			scale = 1.0
+			positionPoint = "BOTTOM",
+			positionX = 18.87359167028386,
+			positionY = 282.3650512695313,
+			scale = 1.0,
+			auraIconSize = 30
 		},
 		experiments = {
 			useAzeriteClassPower = true,
 			azeriteGroupFrames = true
 		},
 		groupFrames = {
-			partyPoint = "TOPLEFT",
-			partyX = 50,
-			partyY = -42,
-			focusPoint = "TOPLEFT",
-			focusX = 200,
-			focusY = -42,
-			focusTargetPoint = "TOPLEFT",
-			focusTargetX = 350,
-			focusTargetY = -42,
+			partyPoint = "LEFT",
+			partyX = 9.521148681640625,
+			partyY = -210.1453857421875,
+			focusPoint = "BOTTOM",
+			focusX = -223.8354157122065,
+			focusY = 293.9203186035156,
+			focusTargetPoint = "BOTTOM",
+			focusTargetX = 264.7646819440436,
+			focusTargetY = 289.8492431640625,
 			showPercent = true,
 			healthFontSize = 17,
 			nameFontSize = 16,
 			healthBarHeight = 16,
 			powerBarHeight = 10,
-			scale = 1
+			scale = 1.25
 		}
 	},
 	global = {
 		actionbars = {
-			sidePanelToggleAlpha = 0.1
+			sidePanelToggleAlpha = 0.5
 		},
 		core = {
-			relativeScale = 1.1,
-			unitframesRelativeScale = 0.85
+			relativeScale = 1,
+			unitframesRelativeScale = 0.75
 		},
 		orbs = {
 			useD2RStyle = true,
 			eyeGlowD2R = true,
-			actionBarsGlow = true
+			actionBarsGlow = true,
+			style = "succubus",
 		},
 		chatbubbles = {
 			enableChatBubbles = true,
@@ -159,30 +167,37 @@ local defaults = {
 		chatframes = {
 			enableChatFrames = false
 		},
+		damageMeter = {
+			useCustomStyle = true
+		},
 		castbar = {
 			enableCastbar = false,
-			positionX = 0,
-			positionY = -290
+			positionX = 9.627570988577913,
+			positionY = 113.6627426147461,
+			positionPoint = "BOTTOM",
 		},
 		unitframes = {
 			enableNamePlates = false,
 			showTargetCastbar = true,
-			showTargetCastbarAboveName = false,
+			showTargetCastbarAboveName = true,
 			useHealthColorForTarget = false,
 			showThreatOnTarget = false,
-			targetRelativeScale = 1.2
+			targetRelativeScale = 1.2,
+			showPlayerBuffs = false,
+			showPlayerInToT = true,
 		},
 		micromenu = {
 			enableMicroMenu = true,
-			buttonSize = 34,
+			buttonSize = 33,
 			toggleAlpha = 0.3
 		},
 		minimap = {
 			useServerTime = false,
 			useHalfClock = false,
 			lfgEyeScale = 1.0,
-			xpRingThickness = 5.8,
-			xpRingTransparency = 50
+			xpRingThickness = 6,
+			xpRingTransparency = 34,
+			disabled = false,
 		},
 		talkinghead = {
 			positionX = 0,
@@ -211,15 +226,16 @@ local defaults = {
 			hideTargetAuras = false
 		},
 		playerDebuffs = {
-			positionPoint = "BOTTOMRIGHT",
-			positionRelPoint = "BOTTOM",
-			positionX = 316,
-			positionY = 100,
+			positionPoint = "LEFT",
+			positionRelPoint = "LEFT",
+			positionX = 473.186279296875,
+			positionY = -213.2156586823648,
 			iconSize = 40,
 			growthX = "LEFT",   -- "LEFT" or "RIGHT"
 			growthY = "UP",     -- "UP" or "DOWN"
 			spacingX = 4,
-			spacingY = 11
+			spacingY = 11,
+			userPositioned = true,
 		},
 		stancebar = {
 			positionX = 380,
@@ -246,6 +262,21 @@ local defaults = {
 	}
 }
 
+ns.GetDefaultSetting = function(self, path, key)
+	local scope = defaults
+	for segment in path:gmatch("[^.]+") do
+		if type(scope) ~= "table" then return end
+		scope = scope[segment]
+	end
+	if type(scope) == "table" then return scope[key] end
+end
+ns.GetDefaultPosition = function(self, path, pointKey, xKey, yKey)
+	return {
+		point = self:GetDefaultSetting(path, pointKey or "positionPoint") or "CENTER",
+		x = self:GetDefaultSetting(path, xKey or "positionX") or 0,
+		y = self:GetDefaultSetting(path, yKey or "positionY") or 0
+	}
+end
 -- Lua API
 local ipairs = ipairs
 local math_max = math.max
@@ -279,6 +310,16 @@ local SanitizeSettings = function(db)
 	db.char.actionbars.enableStanceBar = nil
 	db.char.actionbars.preferPetOrStanceBar = nil
 	db.char.actionbars.restorePetOrStanceBar = nil
+	-- These effects and the extended layout no longer have standalone controls.
+	db.global.orbs.eyeGlowD2R = true
+	db.global.orbs.actionBarsGlow = true
+	db.char.actionbars.useExtendedBars = true
+	-- Migrate the former two-style toggle without overriding an existing selection.
+	local orbStyle = db.global.orbs.style
+	if (orbStyle ~= "legacy" and orbStyle ~= "diablo2" and orbStyle ~= "arahort-stone" and orbStyle ~= "arahort-stone-dark" and orbStyle ~= "succubus") then
+		db.global.orbs.style = db.global.orbs.useD2RStyle and "diablo2" or "legacy"
+	end
+	db.global.orbs.useD2RStyle = db.global.orbs.style ~= "legacy"
 	local numBars = db.char.actionbars.numBars
 	if (numBars) then
 		db.char.actionbars.numBars = nil
@@ -449,7 +490,32 @@ end
 
 -- Allow other modules and addons to use this.
 ns.GetSettings = function(self)
-	return self.db or SanitizeSettings(LibStub("AceDB-3.0"):New(Addon.."_DB", defaults))
+	if (self.db) then return self.db end
+	local saved = _G[Addon.."_DB"]
+	-- Migrate explicit pre-dropdown choices before defaults provide the new style.
+	local savedOrbs = saved and saved.global and saved.global.orbs
+	if savedOrbs and savedOrbs.style == nil and savedOrbs.useD2RStyle ~= nil then
+		savedOrbs.style = savedOrbs.useD2RStyle and "diablo2" or "legacy"
+	end
+	local migrations = saved and saved.global and saved.global.migrations
+	if (saved and not (migrations and migrations.actionBarCountDropdown)) then
+		-- The previous default enabled the second bar and AceDB did not save it.
+		for _, character in next, saved.char or {} do
+			character.actionbars = character.actionbars or {}
+			if (character.actionbars.enableSecondary == nil) then
+				character.actionbars.enableSecondary = true
+			end
+		end
+	end
+	local db = SanitizeSettings(LibStub("AceDB-3.0"):New(Addon.."_DB", defaults))
+	if ns.IsForever then db.char.unitframes.useClassColorForPower = false end
+	db.global.migrations = db.global.migrations or {}
+	db.global.migrations.actionBarCountDropdown = true
+	if ns.IsForever and not db.global.migrations.minimapXPFillOpacity66 then
+		db.global.minimap.xpRingTransparency = 34
+		db.global.migrations.minimapXPFillOpacity66 = true
+	end
+	return db
 end
 
 ns.OnInitialize = function(self)
@@ -471,11 +537,12 @@ ns.OnInitialize = function(self)
 	if (not migrations.playerDebuffsPositionReset) then
 		if (self.db.global.playerDebuffs) then
 			local d = self.db.global.playerDebuffs
-			d.userPositioned = false
-			d.positionPoint = "BOTTOMRIGHT"
-			d.positionRelPoint = "BOTTOM"
-			d.positionX = 316
-			d.positionY = 100
+			local initial = defaults.global.playerDebuffs
+			d.userPositioned = initial.userPositioned or false
+			d.positionPoint = initial.positionPoint
+			d.positionRelPoint = initial.positionRelPoint
+			d.positionX = initial.positionX
+			d.positionY = initial.positionY
 		end
 		migrations.playerDebuffsPositionReset = true
 	end

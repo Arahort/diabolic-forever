@@ -13,8 +13,14 @@
 	<!-- <Script file="Units\Focus.lua"/> --> <!-- TEST: disabled for testing -->
 	<Script file="Units\Target.lua"/>
 	<Script file="Units\ToT.lua"/>
+	<Script file="Common\CathedralHealth.lua"/>
+	<Script file="Common\CathedralCastbar.lua"/>
+	<Script file="Common\CathedralFooter.lua"/>
+	<Script file="Common\CathedralTarget.lua"/>
+	<Script file="Common\ForeverComboPoints.lua"/>
 	<Script file="Units\Boss.lua"/>
 	<Script file="Units\NamePlates.lua"/>
+	<Script file="Common\CryptGroup.lua"/>
 	<Script file="Units\Group\Party.lua"/>
 	<Script file="Units\Group\Focus.lua"/>
 	<Script file="Units\Group\FocusTarget.lua"/>

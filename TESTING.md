@@ -1,6 +1,6 @@
 # Testing Diabolic UI Forever
 
-This guide covers public alpha **6.6.6-r1** on **WoW Forever 1.60.1 (70862), Interface 16001**. Test in the Forever client. Compatibility with another client or build is not implied.
+This guide covers public alpha **6.6.6-r3** on **WoW Forever 1.60.1 (70938), Interface 16001**. Test in the Forever client. Compatibility with another client or build is not implied.
 
 ## Before testing
 
@@ -16,21 +16,21 @@ Saved settings normally live at `_forever_/WTF/Account/<account>/SavedVariables/
 | Area | Check |
 |---|---|
 | Startup | Login, `/reload`, zone changes and logout/login; confirm settings and positions persist. |
-| Orbs | Health/resource changes, death, resurrection and switching resource types. |
+| Orbs and styles | Switch styles out of combat and after a queued combat change. Check health/resource colors, death/resurrection and Succubus artwork/eye alignment. |
 | Prediction | Begin and cancel a heal at partial health; finish a heal; check absorbs, heal absorbs and maximum-health changes. |
 | 3D models | Enable/disable models, choose a model and change speed. Report unavailable models by selection/name. |
 | Action bars | Icons, keybinds, cooldowns/charges, flyouts, out-of-range/usability colours and temporary action pages. |
 | Native controls | Pet summon/dismiss, autocast, possession, forms/stances and shaman totems, as applicable to your class. |
 | Party | Join/leave, invite/remove members during combat, change leader and check that frames retain their size. |
-| Auras | Apply/remove debuffs and check duration/count updates. Change icon size, spacing and growth in Edit Mode. |
+| Auras | Apply/remove auras and check duration/count updates. Change target aura size independently of frame scale. The custom player-debuff frame is currently disabled. |
 | Castbar | Normal casts, channels, cancellation and interruption. Move it in Edit Mode; exit while casting and confirm progress/time remain correct. |
 | Minimap | Coordinates, tracking, mail and native group-finder clicks after layout changes. |
-| XP ring | Gain XP, gain rested XP, change minimap scale, then adjust thickness/transparency live in the Minimap Edit Mode window. Check 0% and 100% transparency. |
+| XP arc | Hover/leave the minimap; gain XP/rested XP; change minimap scale, thickness and transparency live. Check end caps, brass rails and 0%/100% transparency. |
 | Other bars | Confirm reputation and other native status bars remain available; the replaced XP presentation should not leave an extra movable region. |
 | Menus | Hover the toggle, open/close the custom MicroMenu, then enter/leave combat; check native button clicks and the backpack's circular hover art. |
 | Edit Mode | Select, drag, reset and reopen supported elements. Verify shared labels, settings and positions without secret-coordinate errors. |
 
-There are known secret-value comparison reports in Blizzard's Damage Meter while this alpha is enabled. Capture the full stack and conditions if they recur; do not treat them as a resolved issue.
+The previously reported Edit Mode/combat taint reproduction passed after the player-castbar fix on build 70938. Capture fresh logs if aura or Damage Meter secret-value errors recur; this result does not establish compatibility with every class or combat scenario.
 
 ## Diagnostics
 
@@ -42,13 +42,15 @@ Diagnostic recording is enabled in this alpha and keeps the latest **150 snapsho
 | `/diabolicforever stop` | Stop ordinary snapshot recording. |
 | `/diabolicforever clear` | Clear stored diagnostic snapshots. |
 | `/diabolicforever taint` | Start optional detailed native taint capture. |
-| `/diabolicforever taintstop` | Stop native taint capture and restore its previous setting. |
+| `/diabolicforever taintstop` | Disable native taint capture (`taintLog=0`) and print its actual state. |
+
+For a short capture, finish `/reload` first, then enter `/diabolicforever taint` and confirm that the message reports `taintLog=2`. Reproduce the issue, enter `/diabolicforever taintstop`, and then `/reload`. Some addons reset native taint logging during loading, so enable capture after the interface has loaded.
 
 After reproducing a problem, capture a snapshot and use `/reload` or a normal logout to write SavedVariables. The addon cannot force an immediate file write.
 
 - Diagnostic variable: `DiabolicUI3_ForeverLog` inside `_forever_/WTF/Account/<account>/SavedVariables/DiabolicUI3.lua`.
 - If BugGrabber is installed, its errors are in the neighbouring `!BugGrabber.lua` file. BugSack can show/copy the error stack in game.
-- Optional native capture is written by the client to `_forever_/Logs/taint.log`. Stop capture after reproducing the problem, then `/reload`. The previous taint-log setting is also restored on reload/logout.
+- Optional native capture is written by the client to `_forever_/Logs/taint.log`. Stop capture after reproducing the problem, then `/reload`. If capture is still active, the previous taint-log setting is restored on reload/logout; explicit `taintstop` always disables it.
 
 ## Reporting a problem
 

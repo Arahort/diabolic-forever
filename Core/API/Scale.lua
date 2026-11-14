@@ -1,4 +1,4 @@
-﻿local Addon, ns = ...
+local Addon, ns = ...
 local API = ns.API or {}
 ns.API = API
 
@@ -17,6 +17,33 @@ local UnitFramesScaled = {}
 local TargetFrameScaled = {}
 local EditModeUFScaled = {}
 local EditModeMinimapScaled = {}
+local function SetFrameScale(object, scale)
+	local base = ns.IsForever and object.SetScaleBase
+	if not base then
+		object:SetScale(scale)
+		return
+	end
+	-- Native EditMode SetScaleOverride reanchors through SetPointOverride, which
+	-- writes shared manager state. Preserve its geometry using only C base setters.
+	local oldScale = object:GetScale()
+	local isSecret = issecretvalue or function() return false end
+	local points
+	if object.SetPointBase and not isSecret(oldScale) and not isSecret(scale) and scale > 0 and oldScale ~= scale then
+		points = {}
+		for i = 1, object:GetNumPoints() do
+			local point, relativeTo, relativePoint, x, y = object:GetPoint(i)
+			if isSecret(point) or isSecret(relativeTo) or isSecret(relativePoint) or isSecret(x) or isSecret(y) then
+				points = nil
+				break
+			end
+			points[i] = { point, relativeTo, relativePoint, x * oldScale / scale, y * oldScale / scale }
+		end
+	end
+	base(object, scale)
+	if points then
+		for _, point in ipairs(points) do object.SetPointBase(object, unpack(point)) end
+	end
+end
 
 -- Deferred scaling
 ---------------------------------------------------------
@@ -42,7 +69,7 @@ combatWatcher:SetScript("OnEvent", function()
 		pendingScale[object] = nil
 		if (object.SetScale) then
 			object:SetIgnoreParentScale(info.ignoreParentScale ~= false)
-			object:SetScale(info.getScale() * info.factor)
+			SetFrameScale(object, info.getScale() * info.factor)
 		end
 	end
 end)
@@ -54,7 +81,7 @@ local ApplyIgnoredParentScale = function(object, factor, getScale)
 	end
 	pendingScale[object] = nil
 	object:SetIgnoreParentScale(true)
-	object:SetScale(getScale() * factor)
+	SetFrameScale(object, getScale() * factor)
 end
 local ApplyInheritedParentScale = function(object, factor, getScale)
 	if InCombatLockdown() then
@@ -63,7 +90,7 @@ local ApplyInheritedParentScale = function(object, factor, getScale)
 	end
 	pendingScale[object] = nil
 	object:SetIgnoreParentScale(false)
-	object:SetScale(getScale() * factor)
+	SetFrameScale(object, getScale() * factor)
 end
 
 -- Scaling Functions
@@ -160,7 +187,7 @@ API.SetEditModeObjectScale = function(object, factor)
 		EditModeUFScaled[object] = nil
 		TargetFrameScaled[object] = factor or 1
 		object:SetIgnoreParentScale(false)
-		object:SetScale(API.GetEffectiveScale() * (factor or 1))
+		SetFrameScale(object, API.GetEffectiveScale() * (factor or 1))
 	end
 	return object
 end
@@ -179,7 +206,7 @@ API.SetEditModeMinimapObjectScale = function(object, factor)
 		MinimapScaled[object] = nil
 		EditModeMinimapScaled[object] = factor or 1
 		object:SetIgnoreParentScale(false)
-		object:SetScale(API.GetMinimapEffectiveScale() * (factor or 1))
+		SetFrameScale(object, API.GetMinimapEffectiveScale() * (factor or 1))
 	end
 	return object
 end
@@ -205,30 +232,30 @@ API.UpdateObjectScales = function()
 	local scale = API.GetScale()
 	for object, factor in next,Scaled do
 		object:SetIgnoreParentScale(true)
-		object:SetScale(scale * factor)
+		SetFrameScale(object, scale * factor)
 	end
 	-- Update frames that can't ignore parent scales
 	local effectiveScale = API.GetEffectiveScale()
 	for object, factor in next,ScaledToUIParent do
-		object:SetScale(effectiveScale * factor)
+		SetFrameScale(object, effectiveScale * factor)
 	end
 	-- Update minimap objects
 	local minimapScale = API.GetMinimapScale()
 	for object, factor in next,MinimapScaled do
 		object:SetIgnoreParentScale(true)
-		object:SetScale(minimapScale * factor)
+		SetFrameScale(object, minimapScale * factor)
 	end
 	-- Update unitframes objects
 	local unitframesScale = API.GetUnitFramesScale()
 	for object, factor in next,UnitFramesScaled do
 		object:SetIgnoreParentScale(true)
-		object:SetScale(unitframesScale * factor)
+		SetFrameScale(object, unitframesScale * factor)
 	end
 	-- Update EditMode minimap objects
 	local minimapEffective = API.GetMinimapEffectiveScale()
 	for object, factor in next,EditModeMinimapScaled do
 		object:SetIgnoreParentScale(false)
-		object:SetScale(minimapEffective * factor)
+		SetFrameScale(object, minimapEffective * factor)
 	end
 	-- Update EditMode UnitFrames objects (PetBar etc.)
 	-- Same visual as UnitFramesScaled but without SetIgnoreParentScale for LibEditMode
@@ -240,6 +267,6 @@ API.UpdateObjectScales = function()
 	local targetScale = API.GetEffectiveScale()
 	for object, factor in next,TargetFrameScaled do
 		object:SetIgnoreParentScale(false)
-		object:SetScale(targetScale * factor)
+		SetFrameScale(object, targetScale * factor)
 	end
 end

@@ -17,6 +17,7 @@
 
 	<!-- GameMenu.lua - reskins the Escape game menu (backdrop, buttons, title) -->
 	<Script file="GameMenu.lua"/>
+	<Script file="DamageMeter.lua"/>
 
 	<!-- MapCoords.lua - adds player coordinates display to the world map -->
 	<Script file="MapCoords.lua"/>

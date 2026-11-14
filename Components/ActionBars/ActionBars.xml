@@ -17,6 +17,7 @@
 	<Script file="Elements\StanceButtons.lua"/>
 	<Script file="Elements\ExtraButtons.lua"/>
 	<Script file="Elements\StatusBars.lua"/>
+	<Script file="Elements\StoneHUD.lua"/>
 	<Script file="Elements\MicroMenu.lua"/>
 	<Script file="Elements\BagButton.lua"/>
 

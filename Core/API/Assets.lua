@@ -168,8 +168,21 @@ local alias = {
 }
 
 -- Retrieve an asset from the media asset folder.
-local GetMedia = function(name, type)
-	return alias[name] or string_format([[Interface\AddOns\%s\Assets\%s.%s]], Addon, name, type or "tga")
+local IsStoneStyle = function(style)
+	if not ns.IsForever then return false end
+	style = style or (ns.db and ns.db.global.orbs.style)
+	return style == "arahort-stone" or style == "arahort-stone-dark" or style == "succubus"
+end
+local GetMedia = function(name, extension)
+	if ns.IsForever and ns.db and type(name) == "string" and name:sub(1,14) == "arahort-stone/" then
+		local style = ns.db.global.orbs.style
+		if style == "arahort-stone-dark" then
+			name = "arahort-stone-dark/"..name:sub(15)
+		elseif style == "succubus" then
+			name = "succubus/"..name:sub(15)
+		end
+	end
+	return alias[name] or string_format([[Interface\AddOns\%s\Assets\%s.%s]], Addon, name, extension or "tga")
 end
 
 -- Global API
@@ -181,6 +194,7 @@ API.GetAllNumberFonts = GetAllNumberFonts
 API.GetAllNormalFonts = GetAllNormalFonts
 API.SetFontObject = SetFontObject
 API.GetMedia = GetMedia
+API.IsStoneStyle = IsStoneStyle
 API.GetAvailableFonts = GetAvailableFonts
 API.ApplyActiveFont = ApplyActiveFont
 API.ResolveFontPath = ResolveFontPath

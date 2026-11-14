@@ -34,7 +34,7 @@ local Spawn = function(unit, name)
 	local frame = oUF:Spawn(unit, fullName)
 
 	-- WoW 12.0.0: Apply custom HealthPrediction override for secret values compatibility
-	if frame.HealthPrediction and ns.HealthPrediction_Update_Diabolic then
+	if frame.HealthPrediction and not frame.HealthPrediction.healingAll and not frame.HealthPrediction.healingPlayer and ns.HealthPrediction_Update_Diabolic then
 		frame.HealthPrediction.Override = ns.HealthPrediction_Update_Diabolic
 		if not frame.HealthPrediction.calculator then
 			frame.HealthPrediction.calculator = CreateUnitHealPredictionCalculator()
@@ -435,6 +435,11 @@ UnitFrames.SpawnUnitFrames = function(self)
 		local targetFrame = Spawn("target", "Target")
 		targetFrame:SetPoint(posPoint, posX, posY)
 		ns.API.SetTargetFrameObjectScale(targetFrame, targetScale)
+		local targetAuras = ns.IsForever and targetFrame.Auras
+		local auraSize = targetAuras and targetAuras.size
+		if auraSize then
+			ns.API.SetObjectScale(targetAuras, ((tDb and tDb.auraIconSize) or auraSize) / auraSize)
+		end
 		-- Register Target frame with EditMode (LibEditMode)
 		local LibEditMode = ns.LibEditMode
 		if LibEditMode and LibEditMode.AddFrame then
@@ -455,8 +460,8 @@ UnitFrames.SpawnUnitFrames = function(self)
 					tDb.positionX = x
 					tDb.positionY = y
 				end
-			end, {point = "TOP", x = 0, y = -95})
-			LibEditMode:AddFrameSettings(targetFrame, {
+			end, ns:GetDefaultPosition("char.target"))
+			local settings = {
 				-- Checkbox: show the target spell castbar
 				{
 					kind = LibEditMode.SettingType.Checkbox,
@@ -485,7 +490,7 @@ UnitFrames.SpawnUnitFrames = function(self)
 					kind = LibEditMode.SettingType.Checkbox,
 					name = ns.L["TargetFrameCastbarAboveName"] or "Castbar Above Name",
 					desc = ns.L["TargetFrameCastbarAboveNameDesc"] or "When the target castbar is enabled, place it above the target's name instead of below the frame",
-					default = false,
+					default = ns:GetDefaultSetting("global.unitframes", "showTargetCastbarAboveName"),
 					get = function(layoutName)
 						if (ns.db and ns.db.global and ns.db.global.unitframes) then
 							return ns.db.global.unitframes.showTargetCastbarAboveName and true or false
@@ -520,10 +525,32 @@ UnitFrames.SpawnUnitFrames = function(self)
 						end
 					end,
 				}
-			})
+			}
+			if auraSize then
+				settings[#settings + 1] = {
+					kind = LibEditMode.SettingType.Slider,
+					name = ns.L["TargetAuraIconSize"],
+					desc = ns.L["TargetAuraIconSizeDesc"],
+					default = ns:GetDefaultSetting("char.target", "auraIconSize"),
+					minValue = 20,
+					maxValue = 64,
+					valueStep = 1,
+					formatter = function(value) return string_format("%d", value) end,
+					get = function()
+						return (tDb and tDb.auraIconSize) or auraSize
+					end,
+					set = function(_, value)
+						if tDb then tDb.auraIconSize = value end
+						ns.API.SetObjectScale(targetAuras, value / auraSize)
+					end,
+				}
+			end
+			LibEditMode:AddFrameSettings(targetFrame, settings)
 		end
 		WatchBaseUnitTarget(Spawn("targettarget", "ToT"), "target")
 			:SetPoint("CENTER", ns.UnitFramesByName["Target"], "CENTER", 0, -26)
+		if ns.CathedralTarget then ns.CathedralTarget:Initialize(targetFrame, ns.UnitFramesByName["ToT"]) end
+		if ns.ForeverComboPoints then ns.ForeverComboPoints:Initialize(ns.UnitFramesByName["Player"], targetFrame, ns.UnitFramesByName["ToT"]) end
 
 		-- Spawn pet frame
 		local petFrame
@@ -752,7 +779,7 @@ UnitFrames.SpawnGroupFrames = function(self)
 					ns.db.char.groupFrames.partyX = x
 					ns.db.char.groupFrames.partyY = y
 				end
-			end, {point = posPoint, x = posX, y = posY})
+			end, ns:GetDefaultPosition("char.groupFrames", "partyPoint", "partyX", "partyY"))
 			-- Helper: iterate all AzeriteUI-style group frames (party/player in header, focus, focustarget)
 			-- Uses a tag set by Party.lua style function — works regardless of unit token.
 			local ForEachPartyFrame = function(fn)
@@ -886,7 +913,7 @@ UnitFrames.SpawnGroupFrames = function(self)
 					kind = LibEditMode.SettingType.Slider,
 					name = ns.L and ns.L["PartyScale"] or "Scale",
 					desc = ns.L and ns.L["PartyScaleDesc"] or "Adjust the scale of party/focus/focustarget frames",
-					default = 1,
+					default = ns:GetDefaultSetting("char.groupFrames", "scale"),
 					minValue = 0.5,
 					maxValue = 1.5,
 					valueStep = 0.05,
@@ -971,7 +998,7 @@ UnitFrames.SpawnGroupFrames = function(self)
 						ns.db.char.groupFrames[dbXKey] = x
 						ns.db.char.groupFrames[dbYKey] = y
 					end
-				end, {point = pt, x = fx, y = fy})
+				end, ns:GetDefaultPosition("char.groupFrames", dbPointKey, dbXKey, dbYKey))
 			end
 			return f
 		end
@@ -1122,9 +1149,11 @@ UnitFrames.RestoreForeverNativeResources = function(self)
 	if PlayerCastingBarFrame and PlayerCastingBarFrame:GetParent() == PlayerFrame then
 		PlayerFrame_DetachCastBar()
 		PlayerCastingBarFrame:SetParent(UIParent)
-		PlayerCastingBarFrame:ClearAllPoints()
+		local clearPoints = PlayerCastingBarFrame.ClearAllPointsBase or PlayerCastingBarFrame.ClearAllPoints
+		local setPoint = PlayerCastingBarFrame.SetPointBase or PlayerCastingBarFrame.SetPoint
+		clearPoints(PlayerCastingBarFrame)
 		local db = ns.db.global.castbar
-		PlayerCastingBarFrame:SetPoint("CENTER", UIParent, "CENTER", db.positionX or 0, db.positionY or -150)
+		setPoint(PlayerCastingBarFrame, "CENTER", UIParent, "CENTER", db.positionX or 0, db.positionY or -150)
 	end
 end
 UnitFrames.OnInitialize = function(self)

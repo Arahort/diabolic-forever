@@ -721,10 +721,36 @@ local Power_OnMouseOver = function(element)
 	element.__owner:OnMouseOver()
 end
 
+local Power_ApplyColor = function(element, unit)
+	local settings = ns.db.char
+	if settings.orbs and settings.orbs.useCustomColors then
+		local color = settings.orbs.powerColor or { r = 0, g = 0, b = 1 }
+		element:SetStatusBarColor(color.r, color.g, color.b)
+		return
+	end
+	if settings.unitframes.useClassColorForPower then
+		local color = ns.Colors.class[playerClass]
+		if color then
+			element:SetStatusBarColor(color[1], color[2], color[3])
+			return
+		end
+	end
+	local powerType, token = UnitPowerType(unit or "player")
+	local color
+	if not (issecretvalue and issecretvalue(token)) and token then color = PowerBarColor[token] end
+	if not color and not (issecretvalue and issecretvalue(powerType)) and powerType then color = PowerBarColor[powerType] end
+	if not color or not color.r then color = PowerBarColor.MANA end
+	if color then element:SetStatusBarColor(color.r, color.g, color.b) end
+end
+local Power_UpdateColor = function(self, event, unit)
+	if self.__unit ~= unit then return end
+	Power_ApplyColor(self.Power, unit)
+end
 local Power_PostUpdate = function(element, unit, cur, min, max)
 	if (element.ModelOrb) then
 		element.ModelOrb.FillingStatusBar:SetValue(UnitPowerPercent(unit, UnitPowerType(unit), true), Enum.StatusBarInterpolation.ExponentialEaseOut)
 	end
+	if ns.IsForever then return end
 	-- Don't override custom colors
 	if ns.db.char.orbs and ns.db.char.orbs.useCustomColors then
 		return
@@ -989,7 +1015,11 @@ UnitStyles["Player"] = function(self, unit, id)
 	power:SetSize(200,200)
 	power:SetPoint("BOTTOM", 882, 0)
 	power:SetStatusBarTexture(GetMedia("orb2"), GetMedia("orb2"))
-	if ns.db.char.orbs and ns.db.char.orbs.useCustomColors then
+	if ns.IsForever then
+		power.colorPower = false
+		power.UpdateColor = Power_UpdateColor
+		Power_ApplyColor(power, self.unit or "player")
+	elseif ns.db.char.orbs and ns.db.char.orbs.useCustomColors then
 		local color = ns.db.char.orbs.powerColor or {r = 0, g = 0, b = 1}
 		power:SetStatusBarColor(color.r, color.g, color.b)
 		power.colorPower = false
@@ -1110,6 +1140,7 @@ UnitStyles["Player"] = function(self, unit, id)
 	healthGlowAnim:SetSmoothing("IN_OUT")
 	self.Health.EyeGlow = healthEyeGlow
 	self.Health.EyeGlowAG = healthGlowAG
+	self.Health.EyeGlowAnim = healthGlowAnim
 	local powerEyeGlow = artworkOverlay:CreateTexture(nil, "OVERLAY", nil, 3)
 	powerEyeGlow:SetSize(60, 60)
 	powerEyeGlow:SetPoint("CENTER", powerArt, "CENTER", -50, 15)
@@ -1126,6 +1157,7 @@ UnitStyles["Player"] = function(self, unit, id)
 	powerGlowAnim:SetSmoothing("IN_OUT")
 	self.Power.EyeGlow = powerEyeGlow
 	self.Power.EyeGlowAG = powerGlowAG
+	self.Power.EyeGlowAnim = powerGlowAnim
 
 	-- Power Value Text
 	--------------------------------------------
@@ -1369,92 +1401,94 @@ UnitStyles["Player"] = function(self, unit, id)
 	-- Player Debuffs (above the power orb area). Settings come from
 	-- ns.db.global.playerDebuffs and are editable via EditMode.
 	-- Native auras stay under UIParent; Forever uses a separate plain EditMode mover.
-	local pdb = ns.db.global.playerDebuffs
-	-- Derive initialAnchor (the corner inside the frame where the first icon
-	-- starts) from growth direction. positionPoint is the frame's own anchor on
-	-- screen (used by drag), not where icons begin inside the frame.
-	-- growthX = LEFT  -> icons grow leftwards  -> start from the RIGHT side
-	-- growthX = RIGHT -> icons grow rightwards -> start from the LEFT side
-	-- growthY = UP    -> icons grow upwards    -> start from the BOTTOM
-	-- growthY = DOWN  -> icons grow downwards  -> start from the TOP
-	local function deriveInitialAnchor(gx, gy)
-		local vert = (gy == "DOWN") and "TOP" or "BOTTOM"
-		local horiz = (gx == "RIGHT") and "LEFT" or "RIGHT"
-		return vert .. horiz
-	end
-	-- The container starts under the unit frame, then becomes a UIParent sibling
-	-- of its mover so secret native geometry cannot flow back into the editor.
-	local debuffs = self:CreateAuras({
-		initialAnchor = deriveInitialAnchor(pdb.growthX or "LEFT", pdb.growthY or "UP"),
-		growthX = pdb.growthX or "LEFT",
-		growthY = pdb.growthY or "UP",
-		layoutLimit = 300,
-	})
-	debuffs:SetParent(UIParent)
-	debuffs:SetSize(300, 110)
-	if (ns.API.SetEditModeUFObjectScale) then
-		ns.API.SetEditModeUFObjectScale(debuffs, 1)
-	end
-	debuffs.size = pdb.iconSize or 40
-	debuffs.elementSpacing = pdb.spacingX or 4
-	debuffs.lineSpacing = pdb.spacingY or 11
-	debuffs.disableMouse = false
-	debuffs.disableCooldown = false
-	debuffs.showDispelType = true
-	debuffs.countFontSize = 14
-	debuffs.tooltipAnchor = "ANCHOR_TOPRIGHT"
-	debuffs.sortMethod = ns.AuraSorts.UnitFrameDebuff
-	debuffs.sortDirection = ns.AuraSorts.DefaultDirection
-	debuffs.CreateButton = ns.AuraStyles.CreateButton
+	-- Forever: temporarily disabled together with its EditMode mover by user request.
+	if not ns.IsForever then
+		local pdb = ns.db.global.playerDebuffs
+		-- Derive initialAnchor (the corner inside the frame where the first icon
+		-- starts) from growth direction. positionPoint is the frame's own anchor on
+		-- screen (used by drag), not where icons begin inside the frame.
+		-- growthX = LEFT  -> icons grow leftwards  -> start from the RIGHT side
+		-- growthX = RIGHT -> icons grow rightwards -> start from the LEFT side
+		-- growthY = UP    -> icons grow upwards    -> start from the BOTTOM
+		-- growthY = DOWN  -> icons grow downwards  -> start from the TOP
+		local function deriveInitialAnchor(gx, gy)
+			local vert = (gy == "DOWN") and "TOP" or "BOTTOM"
+			local horiz = (gx == "RIGHT") and "LEFT" or "RIGHT"
+			return vert .. horiz
+		end
+		-- The container starts under the unit frame, then becomes a UIParent sibling
+		-- of its mover so secret native geometry cannot flow back into the editor.
+		local debuffs = self:CreateAuras({
+			initialAnchor = deriveInitialAnchor(pdb.growthX or "LEFT", pdb.growthY or "UP"),
+			growthX = pdb.growthX or "LEFT",
+			growthY = pdb.growthY or "UP",
+			layoutLimit = 300,
+		})
+		debuffs:SetParent(UIParent)
+		debuffs:SetSize(300, 110)
+		if (ns.API.SetEditModeUFObjectScale) then
+			ns.API.SetEditModeUFObjectScale(debuffs, 1)
+		end
+		debuffs.size = pdb.iconSize or 40
+		debuffs.elementSpacing = pdb.spacingX or 4
+		debuffs.lineSpacing = pdb.spacingY or 11
+		debuffs.disableMouse = false
+		debuffs.disableCooldown = false
+		debuffs.showDispelType = true
+		debuffs.countFontSize = 14
+		debuffs.tooltipAnchor = "ANCHOR_TOPRIGHT"
+		debuffs.sortMethod = ns.AuraSorts.UnitFrameDebuff
+		debuffs.sortDirection = ns.AuraSorts.DefaultDirection
+		debuffs.CreateButton = ns.AuraStyles.CreateButton
 
-	debuffs.debuffGroup = debuffs:AddGroup(ns.AuraFilters.PlayerDebuffs, { maxFrameCount = 40 })
+		debuffs.debuffGroup = debuffs:AddGroup(ns.AuraFilters.PlayerDebuffs, { maxFrameCount = 40 })
 
-	self.Debuffs = debuffs
-	if ns.IsForever then
-		-- AuraContainer geometry becomes secret; the editor owns only this plain frame.
-		local mover = CreateFrame("Frame", self:GetName().."DebuffsMover", UIParent)
-		mover.editModeName = "Diabolic: Player Debuffs"
-		mover:SetFrameStrata("MEDIUM")
-		mover:SetSize(300, 110)
-		if ns.API.SetEditModeUFObjectScale then ns.API.SetEditModeUFObjectScale(mover, 1) end
-		self.DebuffsMover = mover
-		self.UpdateDebuffsMover = function(self)
+		self.Debuffs = debuffs
+		if ns.IsForever then
+			-- AuraContainer geometry becomes secret; the editor owns only this plain frame.
+			local mover = CreateFrame("Frame", self:GetName().."DebuffsMover", UIParent)
+			mover.editModeName = "Diabolic: Player Debuffs"
+			mover:SetFrameStrata("MEDIUM")
+			mover:SetSize(300, 110)
+			if ns.API.SetEditModeUFObjectScale then ns.API.SetEditModeUFObjectScale(mover, 1) end
+			self.DebuffsMover = mover
+			self.UpdateDebuffsMover = function(self)
+				local d = ns.db.global.playerDebuffs
+				local size, spacingX, spacingY = d.iconSize or 40, d.spacingX or 4, d.spacingY or 11
+				-- Preview two configured rows, never the restricted active aura count or bounds.
+				local columns = math.max(1, math.floor((300 + spacingX) / (size + spacingX)))
+				mover:SetSize(columns * size + (columns - 1) * spacingX, size * 2 + spacingY)
+				local corner = deriveInitialAnchor(d.growthX or "LEFT", d.growthY or "UP")
+				local clearPoints = debuffs.ClearAllPointsBase or debuffs.ClearAllPoints
+				local setPoint = debuffs.SetPointBase or debuffs.SetPoint
+				clearPoints(debuffs)
+				setPoint(debuffs, corner, mover, corner, 0, 0)
+			end
+		end
+
+		-- Apply layout from saved settings. Updates size/spacing/growth and forces re-anchor.
+		self.UpdateDebuffsLayout = function(self)
 			local d = ns.db.global.playerDebuffs
-			local size, spacingX, spacingY = d.iconSize or 40, d.spacingX or 4, d.spacingY or 11
-			-- Preview two configured rows, never the restricted active aura count or bounds.
-			local columns = math.max(1, math.floor((300 + spacingX) / (size + spacingX)))
-			mover:SetSize(columns * size + (columns - 1) * spacingX, size * 2 + spacingY)
-			local corner = deriveInitialAnchor(d.growthX or "LEFT", d.growthY or "UP")
-			local clearPoints = debuffs.ClearAllPointsBase or debuffs.ClearAllPoints
-			local setPoint = debuffs.SetPointBase or debuffs.SetPoint
-			clearPoints(debuffs)
-			setPoint(debuffs, corner, mover, corner, 0, 0)
+			local el = self.Debuffs
+			if (not el) then return end
+			el.size       = d.iconSize or 40
+			el.elementSpacing = d.spacingX or 4
+			el.lineSpacing    = d.spacingY or 11
+			el.growthX    = d.growthX  or "LEFT"
+			el.growthY    = d.growthY  or "UP"
+			-- The container owns the layout now, so growth and spacing are pushed into it
+			-- directly, and the buttons it already built are resized in place.
+			el:SetFlowLayoutAnchorPoint(deriveInitialAnchor(el.growthX, el.growthY))
+			el:SetFlowLayoutGrowthDirection((el.growthX == "LEFT") and -1 or 1, (el.growthY == "DOWN") and -1 or 1)
+			el:SetAuraGroupLayout(el.debuffGroup, {
+				elementSpacing = el.elementSpacing,
+				lineSpacing = el.lineSpacing,
+			})
+			ns.AuraStyles.UpdateButtonSizes(el, el.debuffGroup, el.size)
+			if self.UpdateDebuffsMover then self:UpdateDebuffsMover() end
+			if (el.ForceUpdate) then el:ForceUpdate() end
 		end
 	end
-
-	-- Apply layout from saved settings. Updates size/spacing/growth and forces re-anchor.
-	self.UpdateDebuffsLayout = function(self)
-		local d = ns.db.global.playerDebuffs
-		local el = self.Debuffs
-		if (not el) then return end
-		el.size       = d.iconSize or 40
-		el.elementSpacing = d.spacingX or 4
-		el.lineSpacing    = d.spacingY or 11
-		el.growthX    = d.growthX  or "LEFT"
-		el.growthY    = d.growthY  or "UP"
-		-- The container owns the layout now, so growth and spacing are pushed into it
-		-- directly, and the buttons it already built are resized in place.
-		el:SetFlowLayoutAnchorPoint(deriveInitialAnchor(el.growthX, el.growthY))
-		el:SetFlowLayoutGrowthDirection((el.growthX == "LEFT") and -1 or 1, (el.growthY == "DOWN") and -1 or 1)
-		el:SetAuraGroupLayout(el.debuffGroup, {
-			elementSpacing = el.elementSpacing,
-			lineSpacing = el.lineSpacing,
-		})
-		ns.AuraStyles.UpdateButtonSizes(el, el.debuffGroup, el.size)
-		if self.UpdateDebuffsMover then self:UpdateDebuffsMover() end
-		if (el.ForceUpdate) then el:ForceUpdate() end
-	end
-
 	-- Scripts & Events
 	--------------------------------------------
 	self.OnEvent = UnitFrame_OnEvent
@@ -1483,17 +1517,24 @@ UnitStyles["Player"] = function(self, unit, id)
 	self.UpdateOrbColors = function(self)
 		local health = self.Health
 		local power = self.Power
-		if ns.db.char.orbs and ns.db.char.orbs.useCustomColors then
+		local custom = ns.db.char.orbs and ns.db.char.orbs.useCustomColors
+		if custom then
 			health.colorHealth = false
 			local healthColor = ns.db.char.orbs.healthColor or {r = 1, g = 0, b = 0}
 			health:SetStatusBarColor(healthColor.r, healthColor.g, healthColor.b)
-			power.colorPower = false
-			local powerColor = ns.db.char.orbs.powerColor or {r = 0, g = 0, b = 1}
-			power:SetStatusBarColor(powerColor.r, powerColor.g, powerColor.b)
 		else
 			health.colorHealth = true
 			local r, g, b = health:GetStatusBarColor()
 			health:SetStatusBarColor(r, g, b)
+		end
+		if ns.IsForever then
+			power.colorPower = false
+			Power_ApplyColor(power, self.__unit or self.unit or "player")
+		elseif custom then
+			power.colorPower = false
+			local powerColor = ns.db.char.orbs.powerColor or {r = 0, g = 0, b = 1}
+			power:SetStatusBarColor(powerColor.r, powerColor.g, powerColor.b)
+		else
 			if ns.db.char.unitframes.useClassColorForPower then
 				power.colorPower = true
 				local _, class = UnitClass("player")
@@ -1511,6 +1552,12 @@ UnitStyles["Player"] = function(self, unit, id)
 	end
 	ns.RegisterCallback(self, "OrbColors_Updated", "UpdateOrbColors")
 	self:UpdateOrbColors()
+	if ns.IsForever then
+		self.UpdatePowerOrbColor = function(self)
+			Power_ApplyColor(self.Power, self.__unit or self.unit or "player")
+		end
+		ns.RegisterCallback(self, "UnitFrames_Settings_Updated", "UpdatePowerOrbColor")
+	end
 
 	self.UpdateEyeGlow = function(self)
 		local enabled = ns.db.global.orbs and ns.db.global.orbs.useD2RStyle and ns.db.global.orbs.eyeGlowD2R
@@ -1527,7 +1574,48 @@ UnitStyles["Player"] = function(self, unit, id)
 		end
 	end
 	ns.RegisterCallback(self, "OrbEyeGlow_Updated", "UpdateEyeGlow")
-	self:UpdateEyeGlow()
+	self.UpdateSuccubusArtworkPosition = function(self)
+		local active = ns.IsForever and ns.db.global.orbs.style == "succubus"
+		local db = ns.db.char.orbs
+		self.Power.Artwork:ClearAllPoints()
+		self.Power.Artwork:SetPoint("BOTTOMLEFT", self.Power, "BOTTOM", active and (-111.5 + (db.succubusArtworkX or 0)) or -29, active and (-25 + (db.succubusArtworkY or 0)) or -25)
+	end
+	self.UpdateOrbStyle = function(self)
+		local useD2RStyle = ns.db.global.orbs.useD2RStyle
+		local stone = ns.IsForever and ns.API.IsStoneStyle()
+		local succubus = stone and ns.db.global.orbs.style == "succubus"
+		self.Health.Artwork:SetSize(succubus and 660 or 330, 330)
+		self.Health.Artwork:ClearAllPoints()
+		self.Health.Artwork:SetPoint("BOTTOMRIGHT", self.Health, "BOTTOM", succubus and 90.875 or 29, -25)
+		self.Power.Artwork:SetSize(succubus and 660 or 330, succubus and 660 or 330)
+		self:UpdateSuccubusArtworkPosition()
+		local artworkBrightness = stone and .75 or 1
+		self.Health.Artwork:SetVertexColor(artworkBrightness, artworkBrightness, artworkBrightness)
+		self.Power.Artwork:SetVertexColor(artworkBrightness, artworkBrightness, artworkBrightness)
+		self.Health.Artwork:SetTexture(stone and GetMedia("arahort-stone/orb-art1", "png") or GetMedia(useD2RStyle and "orb-art1-d2r" or "orb-art1"))
+		self.Power.Artwork:SetTexture(stone and GetMedia("arahort-stone/orb-art2", "png") or GetMedia(useD2RStyle and "orb-art2-d2r" or "orb-art2"))
+		for index, orb in ipairs({ self.Health, self.Power }) do
+			orb.EyeGlowAG:Stop()
+			orb.EyeGlowAnim:SetFromAlpha(stone and 0 or .4)
+			orb.EyeGlowAnim:SetToAlpha(stone and 1 or .8)
+			orb.EyeGlow:ClearAllPoints()
+			if stone then
+				orb.EyeGlow:SetTexture(GetMedia("arahort-stone/eye-glow"..index, "png"))
+				orb.EyeGlow:SetAllPoints(orb.Artwork)
+			else
+				orb.EyeGlow:SetTexture(GetMedia("orb-glass"))
+				orb.EyeGlow:SetSize(60, 60)
+				orb.EyeGlow:SetPoint("CENTER", orb.Artwork, "CENTER", index == 1 and 34 or -50, index == 1 and 42 or 15)
+			end
+		end
+		local borderTexture = ns.API.IsStoneStyle() and GetMedia("arahort-stone/orb-border", "png") or GetMedia("orb-border")
+		self.Health.Border:SetTexture(borderTexture)
+		self.Power.Border:SetTexture(borderTexture)
+		if ns.StoneHUD then ns.StoneHUD:PreparePlayer(self) end
+		self:UpdateEyeGlow()
+	end
+	ns.RegisterCallback(self, "OrbStyle_Updated", "UpdateOrbStyle")
+	self:UpdateOrbStyle()
 -- Class Power / Runes Position and Scale
 	self.UpdateClassPowerPosition = function(self)
 		local db = ns.db.char.classpower
@@ -1714,4 +1802,40 @@ UnitStyles["Player"] = function(self, unit, id)
 		})
 	end
 
+end
+if ns.IsForever then
+	ns:RegisterChatCommand("succubus", function(command)
+		local L = ns.L
+		local player = _G.DiabolicUnitFramePlayer
+		if not ns.db or ns.db.global.orbs.style ~= "succubus" or not player or not player.UpdateSuccubusArtworkPosition then
+			print(L["SuccubusPositionUnavailable"])
+			return
+		end
+		command = string.lower(string.match(command or "", "^%s*(.-)%s*$"))
+		local db = ns.db.char.orbs
+		if command == "" then
+			print(string.format(L["SuccubusPositionCurrent"], db.succubusArtworkX or 0, db.succubusArtworkY or 0))
+			print(L["SuccubusPositionUsage"])
+			return
+		end
+		local x, y
+		if command == "reset" then
+			x, y = -6, -4
+		else
+			local first, second = string.match(command, "^(%S+)%s+(%S+)$")
+			x = first and tonumber((string.gsub(first, ",", ".")))
+			y = second and tonumber((string.gsub(second, ",", ".")))
+			if not x or not y or x ~= x or y ~= y or math.abs(x) > 200 or math.abs(y) > 200 then
+				print(L["SuccubusPositionUsage"])
+				return
+			end
+		end
+		if InCombatLockdown() then
+			print(L["SuccubusPositionCombat"])
+			return
+		end
+		db.succubusArtworkX, db.succubusArtworkY = x, y
+		player:UpdateSuccubusArtworkPosition()
+		print(string.format(L["SuccubusPositionCurrent"], x, y))
+	end)
 end

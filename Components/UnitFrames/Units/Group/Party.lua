@@ -20,6 +20,7 @@ local issecretvalue = issecretvalue or function() return false end
 local Colors = ns.Colors
 local GetFont = ns.API.GetFont
 local GetMedia = ns.API.GetMedia
+local CryptGroup = ns.CryptGroup
 -- AzeriteUI silver "ui" color
 local UI_R, UI_G, UI_B = 192/255, 192/255, 192/255
 -- Config
@@ -181,6 +182,7 @@ local Power_PostUpdate = function(element, unit, cur, min, max)
 			if (parent and parent.PowerBarBackground) then parent.PowerBarBackground:Hide() end
 			if (parent and parent.PowerBackdrop) then parent.PowerBackdrop:Hide() end
 		end
+		if CryptGroup then CryptGroup.SetPowerShown(parent, show) end
 	end
 	if (not UnitIsConnected(unit)) or UnitIsDeadOrGhost(unit) then
 		setVisible(false)
@@ -247,12 +249,14 @@ local TargetHighlight_Update = function(self, event, unit)
 	local border = self.Portrait.Border
 	if (not unit) then
 		border:SetVertexColor(UI_R, UI_G, UI_B, 1)
+		if CryptGroup then CryptGroup.SetTarget(self, false) end
 		return
 	end
 	-- WoW 12.1: UnitIsUnit is SecretWhenUnitComparisonRestricted, so its result must not
 	-- be tested in Lua. Each channel is picked in C instead, the same way the target
 	-- castbar resolves its interrupt state, so the golden highlight keeps working.
 	local isTarget = UnitIsUnit(unit, "target")
+	if CryptGroup then CryptGroup.SetTarget(self, isTarget) end
 	local ev = C_CurveUtil and C_CurveUtil.EvaluateColorValueFromBoolean
 	if (ev) then
 		border:SetVertexColor(ev(isTarget, 1, UI_R), ev(isTarget, .94, UI_G), ev(isTarget, .66, UI_B), 1)
@@ -367,28 +371,32 @@ UnitStyles["Party"] = function(self, unit, id)
 	self.Health.Override = ns.API.UpdateHealth
 	self.Health.PostUpdateColor = Health_PostUpdateColor
 	-- Health Prediction (incoming heals + absorbs + heal-absorbs)
-	local healPredFrame = CreateFrame("Frame", nil, health)
-	healPredFrame:SetFrameLevel(health:GetFrameLevel() + 1)
-	healPredFrame:SetAllPoints()
-	local myHealPrediction = healPredFrame:CreateTexture(nil, "OVERLAY", nil, 1)
-	myHealPrediction:SetTexture(GetMedia("statusbar/Heath-Bar"))
-	myHealPrediction:SetVertexColor(0, .827, 0, .35)
-	local otherHealPrediction = healPredFrame:CreateTexture(nil, "OVERLAY", nil, 1)
-	otherHealPrediction:SetTexture(GetMedia("statusbar/Heath-Bar"))
-	otherHealPrediction:SetVertexColor(0, .631, .557, .35)
-	local totalAbsorb = healPredFrame:CreateTexture(nil, "OVERLAY", nil, 2)
-	totalAbsorb:SetTexture(GetMedia("statusbar/Heath-Bar"))
-	totalAbsorb:SetVertexColor(1, 1, 1, .35)
-	local healAbsorb = healPredFrame:CreateTexture(nil, "OVERLAY", nil, 3)
-	healAbsorb:SetTexture(GetMedia("statusbar/Heath-Bar"))
-	healAbsorb:SetVertexColor(.5, 0, 0, .5)
-	self.HealthPrediction = {
-		myBar = myHealPrediction,
-		otherBar = otherHealPrediction,
-		absorbBar = totalAbsorb,
-		healAbsorbBar = healAbsorb,
-		maxOverflow = 1
-	}
+	if ns.IsForever then
+		self.HealthPrediction = ns.API.CreateHorizontalHealthPrediction(health, true)
+	else
+		local healPredFrame = CreateFrame("Frame", nil, health)
+		healPredFrame:SetFrameLevel(health:GetFrameLevel() + 1)
+		healPredFrame:SetAllPoints()
+		local myHealPrediction = healPredFrame:CreateTexture(nil, "OVERLAY", nil, 1)
+		myHealPrediction:SetTexture(GetMedia("statusbar/Heath-Bar"))
+		myHealPrediction:SetVertexColor(0, .827, 0, .35)
+		local otherHealPrediction = healPredFrame:CreateTexture(nil, "OVERLAY", nil, 1)
+		otherHealPrediction:SetTexture(GetMedia("statusbar/Heath-Bar"))
+		otherHealPrediction:SetVertexColor(0, .631, .557, .35)
+		local totalAbsorb = healPredFrame:CreateTexture(nil, "OVERLAY", nil, 2)
+		totalAbsorb:SetTexture(GetMedia("statusbar/Heath-Bar"))
+		totalAbsorb:SetVertexColor(1, 1, 1, .35)
+		local healAbsorb = healPredFrame:CreateTexture(nil, "OVERLAY", nil, 3)
+		healAbsorb:SetTexture(GetMedia("statusbar/Heath-Bar"))
+		healAbsorb:SetVertexColor(.5, 0, 0, .5)
+		self.HealthPrediction = {
+			myBar = myHealPrediction,
+			otherBar = otherHealPrediction,
+			absorbBar = totalAbsorb,
+			healAbsorbBar = healAbsorb,
+			maxOverflow = 1
+		}
+	end
 	-- HP text (percent or number based on setting) - font size configurable in EditMode
 	local healthFontSize = 17
 	if (ns.db and ns.db.char and ns.db.char.groupFrames and ns.db.char.groupFrames.healthFontSize) then
@@ -415,7 +423,7 @@ UnitStyles["Party"] = function(self, unit, id)
 	local name = overlay:CreateFontString(nil, "OVERLAY")
 	name:SetFontObject(GetFont(nameFontSize, true))
 	name:SetTextColor(unpack(Colors.offwhite))
-	name:SetPoint("BOTTOM", health, "TOP", 0, 3)
+	if not CryptGroup then name:SetPoint("BOTTOM", health, "TOP", 0, 3) end
 	name:SetJustifyH("CENTER")
 	self:Tag(name, "["..ns.Prefix..":Name]")
 	self.Name = name
@@ -472,7 +480,11 @@ UnitStyles["Party"] = function(self, unit, id)
 	-- Leader Indicator
 	local leader = overlay:CreateTexture(nil, "OVERLAY", nil, 3)
 	leader:SetSize(16, 16)
-	leader:SetPoint("LEFT", groupRole, "RIGHT", 2, 0)
+	if ns.IsForever then
+		leader:SetPoint("BOTTOM", groupRole, "TOP", 0, 2)
+	else
+		leader:SetPoint("LEFT", groupRole, "RIGHT", 2, 0)
+	end
 	self.LeaderIndicator = leader
 	-- Raid Target Indicator (skull, star, etc.)
 	local raidTarget = overlay:CreateTexture(nil, "OVERLAY", nil, 3)
@@ -515,7 +527,7 @@ UnitStyles["Party"] = function(self, unit, id)
 		layoutLimit = aurasWidth,
 	})
 	auras:SetSize(aurasWidth, aurasHeight)
-	auras:SetPoint("TOP", self, "BOTTOM", 0, -4)
+	if not CryptGroup then auras:SetPoint("TOP", self, "BOTTOM", 0, -4) end
 	auras.size = AURA_SIZE
 	auras.elementSpacing = AURA_SPACING
 	auras.lineSpacing = AURA_SPACING
@@ -541,6 +553,10 @@ UnitStyles["Party"] = function(self, unit, id)
 	auras.debuffGroup = auras:AddGroup(ns.AuraFilters.PlayerDebuffs, { maxFrameCount = auraLimit })
 
 	self.Auras = auras
+	if CryptGroup then
+		CryptGroup.Install(self, portraitFrame, portraitOverlay, backdropFrame)
+		if unit then CryptGroup.SetTarget(self, UnitIsUnit(unit, "target")) end
+	end
 	return self
 end
 --[==[ Test mode: show fake debuff buttons on party frames to verify layout

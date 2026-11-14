@@ -31,6 +31,46 @@ API.SetPreviewColor = function(preview, r, g, b)
 	end
 end
 
+-- Anchor to the native fill edge so the engine handles secret health and healing.
+API.CreateHorizontalHealthPrediction = function(health, splitHealing)
+	local overlay = CreateFrame("Frame", nil, health)
+	overlay:SetAllPoints(health)
+	overlay:SetFrameLevel(health:GetFrameLevel() + 2)
+	overlay:SetClipsChildren(true)
+	local fill = health:GetNativeStatusBar():GetStatusBarTexture()
+	local function CreatePredictionBar(anchor, reverse, r, g, b, alpha)
+		local bar = CreateFrame("StatusBar", nil, overlay)
+		bar:SetFrameLevel(overlay:GetFrameLevel())
+		bar:SetPoint("TOP", overlay)
+		bar:SetPoint("BOTTOM", overlay)
+		bar:SetPoint(reverse and "RIGHT" or "LEFT", anchor, "RIGHT")
+		bar:SetWidth(health:GetWidth())
+		bar:SetReverseFill(reverse)
+		bar:SetRenderMode(Enum.StatusBarRenderMode.Linear)
+		bar:SetStatusBarTexture([[Interface\Buttons\WHITE8X8]])
+		bar:SetStatusBarColor(r, g, b, alpha)
+		bar:SetMinMaxValues(0, 1)
+		bar:SetValue(0)
+		return bar
+	end
+	local prediction = {
+		incomingHealClampMode = Enum.UnitIncomingHealClampMode.MissingHealth,
+		incomingHealOverflow = 1,
+		healAbsorbMode = Enum.UnitHealAbsorbMode.ReducedByIncomingHeals,
+		healAbsorbClampMode = Enum.UnitHealAbsorbClampMode.CurrentHealth,
+		damageAbsorbClampMode = Enum.UnitDamageAbsorbClampMode.MissingHealth,
+	}
+	local incoming = CreatePredictionBar(fill, false, .15, .85, .3, .35)
+	if splitHealing then
+		prediction.healingPlayer = incoming
+		prediction.healingOther = CreatePredictionBar(incoming:GetStatusBarTexture(), false, 0, .63, .56, .35)
+		prediction.damageAbsorb = CreatePredictionBar(prediction.healingOther:GetStatusBarTexture(), false, .25, .65, 1, .5)
+	else
+		prediction.healingAll = incoming
+	end
+	prediction.healAbsorb = CreatePredictionBar(fill, true, .5, 0, 0, .5)
+	return prediction
+end
 -- Simple UpdateHealth - direct API for all units
 API.UpdateHealth = function(self, event, unit)
 	if (not unit or self.__unit ~= unit) then return end

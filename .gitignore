@@ -73,3 +73,16 @@ FOREVER_TESTING.md
 dist/
 __pycache__/
 *.pyc
+# Local design concepts and research artifacts
+/design/
+/ui-sheet-parts-v04-v05/
+/concept-*
+/ui-asset-sheet*
+/stone-*-comparison.png
+/target-frame-*-preview.png
+/guardian-concepts-v06.html
+/hud-glow-preview.html
+/CONCEPTS.md
+/UI-REDESIGN-SHEETS.md
+/UI-SHEETS-V04-V05.md
+/FOREVER_KNOWN_ISSUES.md

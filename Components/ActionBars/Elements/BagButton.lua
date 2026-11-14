@@ -194,7 +194,8 @@ BagButton.SetupBagsBar = function(self)
 		self.__settingUpForever = true
 		self:LayoutForeverBags()
 	end
-	if settings.hideBagButton then
+	if ns.StoneHUD and not ns.StoneHUD:IsActive() then ns.StoneHUD:Refresh() end
+	if settings.hideBagButton and not (ns.StoneHUD and ns.StoneHUD:IsActive()) then
 		if BagsBar then
 			BagsBar:SetParent(ns.Hider)
 			BagsBar:Hide()
@@ -213,6 +214,7 @@ BagButton.SetupBagsBar = function(self)
 		self:StyleButton(bagButton)
 	end
 	self.__settingUpForever = nil
+	if ns.StoneHUD then ns.StoneHUD:Refresh() end
 end
 BagButton.OnRegenEnabled = function(self)
 	if (self.__pendingSetup) then

@@ -63,7 +63,7 @@ local toggleOnLeave = function(self)
 end
 
 local toggleUpdateAlpha = function(self)
-	if (self.mouseOver) or (IsShiftKeyDown() and IsControlKeyDown()) or (self.Bar1:IsShown()) then
+	if (ns.IsForever and ns.db and ns.API.IsStoneStyle()) or (self.mouseOver) or (IsShiftKeyDown() and IsControlKeyDown()) or (self.Bar1:IsShown()) then
 		self:SetAlpha(1)
 	else
 		self:SetAlpha(ns.db and ns.db.global.actionbars.sidePanelToggleAlpha or 0)
@@ -157,7 +157,7 @@ local style = function(button)
 	cooldown:SetEdgeTexture(b)
 	cooldown:SetDrawEdge(false)
 	-- WoW 12.0.0: Show built-in countdown numbers (Blizzard's native countdown)
-	cooldown:SetHideCountdownNumbers(false)
+	if ns.IsForever then cooldown:SetHideCountdownNumbers(not C_CVar.GetCVarBool("countdownForCooldowns")) else cooldown:SetHideCountdownNumbers(false) end
 
 	-- Custom overlay frame
 	local overlay = CreateFrame("Frame", nil, button)
@@ -271,7 +271,7 @@ local style = function(button)
 	button.AddToButtonFacade = noop
 	button.LBFSkinned = nil
 	button.MasqueSkinned = nil
-
+	if ns.IsForever then ns.ActionButton.ApplyCooldownAppearance(button) end
 	return button
 end
 
@@ -390,7 +390,8 @@ Bars.SpawnBars = function(self)
 	-- Third ActionBar (Bottom Right MultiBar)
 	-------------------------------------------------------
 	local bar = SetObjectScale(ns.ActionBar:Create(BOTTOMRIGHT_ACTIONBAR_PAGE, ns.Prefix.."ActionBar3", UIParent))
-	bar:SetPoint("BOTTOM", -1, 7 + self:GetSecondaryBarOffset() + self:GetThirdBarOffset())
+	local thirdBarBottom = ns.IsForever and 11 or 7
+	bar:SetPoint("BOTTOM", -1, thirdBarBottom + self:GetSecondaryBarOffset() + self:GetThirdBarOffset())
 	bar:SetSize(647, 53)
 	-- WoW 12.0: Don't hide bar before creating buttons - create buttons first, then hide
 	-- bar:Hide() moved after button creation
@@ -1171,6 +1172,107 @@ Bars.UpdateActionBarsGlow = function(self)
 	end
 end
 
+Bars.UpdateSidePanelLayout = function(self)
+	if not ns.IsForever or InCombatLockdown() then return end
+	local stone = ns.API.IsStoneStyle()
+	for name, bar in pairs(self.Bars or {}) do
+		if name:match("^SmallActionBar") and bar.Backdrop and bar.buttons and #bar.buttons > 0 then
+			if stone then
+				if not bar.__StoneOriginalLayout then
+					local original = { points = {}, buttons = {}, width = bar:GetWidth(), height = bar:GetHeight() }
+					for index = 1, bar:GetNumPoints() do original.points[index] = { bar:GetPoint(index) } end
+					for index, button in ipairs(bar.buttons) do
+						original.buttons[index] = {}
+						for point = 1, button:GetNumPoints() do original.buttons[index][point] = { button:GetPoint(point) } end
+					end
+					bar.__StoneOriginalLayout = original
+				end
+				local count = #bar.buttons
+				local columns = count >= 12 and 6 or 3
+				local rows = math.ceil(count/columns)
+				local width, height = bar.buttons[1]:GetSize()
+				if issecretvalue and (issecretvalue(width) or issecretvalue(height)) then width, height = 53, 53 end
+				local stepX, stepY = width+1, height+11
+				local gridWidth = columns*width+(columns-1)
+				local gridHeight = rows*height+(rows-1)*11
+				bar:SetSize(gridWidth, gridHeight)
+				for index, button in ipairs(bar.buttons) do
+					button:ClearAllPoints()
+					button:SetPoint("TOPLEFT", bar, "TOPLEFT", ((index-1)%columns)*stepX, -math.floor((index-1)/columns)*stepY)
+				end
+				local number = tonumber(name:match("(%d+)$"))
+				local level
+				if ns.db.char.actionbars.useExtendedBars then level = (number == 2 or number == 5) and 1 or 0 else level = number > 3 and number-4 or number-1 end
+				local point = bar.__StoneOriginalLayout.points[1]
+				if point then
+					bar:ClearAllPoints()
+					bar:SetPoint(point[1], point[2], point[3], point[4], 70+level*(gridHeight+32))
+				end
+				if not bar.__StoneBackdrop then
+					local backdrop = CreateFrame("Frame", nil, bar, ns.BackdropTemplate)
+					backdrop:SetFrameLevel(bar:GetFrameLevel())
+					backdrop:SetPoint("TOPLEFT", bar, "TOPLEFT", -12, 16)
+					backdrop:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", 12, -16)
+					bar.__StoneBackdrop = backdrop
+					bar.__StoneDividers = {}
+				end
+				bar.__StoneBackdrop:SetBackdrop({ bgFile = [[Interface\Tooltips\UI-Tooltip-Background]], edgeFile = GetMedia("arahort-stone/border-tooltip", "png"), edgeSize = 16, insets = { left = 4, right = 4, top = 8, bottom = 8 } })
+				bar.__StoneBackdrop:SetBackdropColor(.03, .03, .03, .98)
+				bar.Backdrop:Hide()
+				bar.__StoneBackdrop:Show()
+				for row = 1, rows-1 do
+					local divider = bar.__StoneDividers[row]
+					if not divider then
+						divider = bar.__StoneBackdrop:CreateTexture(nil, "ARTWORK", nil, -1)
+						divider:SetTexCoord(360/2048,1690/2048,349/512,359/512)
+						divider:SetHeight(3)
+						bar.__StoneDividers[row] = divider
+					end
+					divider:SetTexture(GetMedia("arahort-stone/bars-double", "png"))
+					divider:ClearAllPoints()
+					local y = -(height+(row-1)*stepY+5.5)
+					divider:SetPoint("LEFT", bar, "TOPLEFT", -4, y)
+					divider:SetPoint("RIGHT", bar, "TOPRIGHT", 4, y)
+					divider:Show()
+				end
+			elseif bar.__StoneOriginalLayout then
+				local original = bar.__StoneOriginalLayout
+				bar.__StoneOriginalLayout = nil
+				bar:SetSize(original.width, original.height)
+				bar:ClearAllPoints()
+				for _, point in ipairs(original.points) do bar:SetPoint(unpack(point)) end
+				for index, points in ipairs(original.buttons) do
+					local button = bar.buttons[index]
+					button:ClearAllPoints()
+					for _, point in ipairs(points) do button:SetPoint(unpack(point)) end
+				end
+				bar.__StoneBackdrop:Hide()
+				bar.Backdrop:Show()
+			end
+		end
+	end
+end
+Bars.UpdateArtworkStyle = function(self)
+	local artwork = self.Artwork
+	if (not artwork) then return end
+	local isStone = ns.IsForever and ns.API.IsStoneStyle()
+	for key, asset in pairs({ Single = "bars-single", Double = "bars-double", Triple = "bars-triple" }) do
+		artwork[key]:SetTexture(isStone and GetMedia("arahort-stone/"..asset, "png") or GetMedia(asset))
+	end
+	for name, bar in pairs(self.Bars or {}) do
+		if name:match("^SmallActionBar") and bar.Backdrop then
+			bar.Backdrop:SetTexture(GetMedia("bars-floater"))
+		end
+	end
+	self:UpdateSidePanelLayout()
+	-- Stone changes the carved material, not the original amber light in its recesses.
+	artwork.LeftFill:SetVertexColor(25/255, 20/255, 15/255, 1)
+	artwork.RightFill:SetVertexColor(25/255, 20/255, 15/255, 1)
+	artwork.LeftBase:SetVertexColor(0.5, 0.22, 0.04)
+	artwork.RightBase:SetVertexColor(0.5, 0.22, 0.04)
+	artwork.LeftHighlight:SetVertexColor(0.9, 0.4, 0.05)
+	artwork.RightHighlight:SetVertexColor(0.9, 0.4, 0.05)
+end
 Bars.OnEnable = function(self)
 	if ns.RegisterCallback then
 		ns.RegisterCallback(self, "ActionBars_SecondaryBar_Updated", "UpdateArtwork")
@@ -1178,10 +1280,12 @@ Bars.OnEnable = function(self)
 		ns.RegisterCallback(self, "Saved_Settings_Updated", "UpdateSettings")
 		ns.RegisterCallback(self, "ActionBar_Settings_Updated", "UpdateSettings")
 		ns.RegisterCallback(self, "ActionBarsGlow_Updated", "UpdateActionBarsGlow")
+		ns.RegisterCallback(self, "OrbStyle_Updated", "UpdateArtworkStyle")
 	end
 
 	self:UpdateSettings()
 	self:UpdateArtwork()
+	self:UpdateArtworkStyle()
 	self:UpdateBindings()
 
 	self:RegisterEvent("UPDATE_BINDINGS", "UpdateBindings")
@@ -1197,4 +1301,5 @@ Bars.OnEnable = function(self)
 		ns.ForeverActionBarsReady = true
 		ns:Fire("ActionBars_Forever_Ready")
 	end
+	if ns.StoneHUD then ns.StoneHUD:RequestRefresh() end
 end

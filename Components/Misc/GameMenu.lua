@@ -9,6 +9,7 @@
 
 	Artwork and the original implementation of this skin are by Gonkast
 	(MyCustomFrames / MyCustomFrames-Skins, "Charcoal" skin), used with permission.
+	Stone Light artwork adaptation: Arahort <alex@arahort.pro>.
 --]]
 local Addon, ns = ...
 local GameMenu = ns:NewModule("GameMenu", "AceEvent-3.0")
@@ -30,6 +31,12 @@ local UIHider = ns.Hider
 local TEX_BACKDROP = GetMedia("gamemenu/gamemenu-backdrop", "png")
 local TEX_BUTTON = GetMedia("gamemenu/gamemenu-button", "png")
 local TEX_BUTTON_RED = GetMedia("gamemenu/gamemenu-button-red", "png")
+local IsStoneStyle = function()
+	return ns.IsForever and ns.db and ns.API.IsStoneStyle()
+end
+local BackdropForStyle = function()
+	return IsStoneStyle() and GetMedia("arahort-stone/gamemenu-backdrop", "png") or TEX_BACKDROP
+end
 
 local CFG = {
 	-- Full screen dim behind the menu. Own frame, nothing protected involved.
@@ -73,6 +80,10 @@ if (EXIT_GAME) then RED_LABELS[EXIT_GAME] = true end
 if (MAINMENU_BUTTON) then RED_LABELS[MAINMENU_BUTTON] = true end
 
 local TextureForLabel = function(label)
+	if IsStoneStyle() then
+		local red = label and (label == LOG_OUT or label == EXIT_GAME)
+		return GetMedia(red and "arahort-stone/gamemenu-button-red" or "arahort-stone/gamemenu-button", "png")
+	end
 	return (label and RED_LABELS[label]) and TEX_BUTTON_RED or TEX_BUTTON
 end
 
@@ -250,7 +261,7 @@ local BuildFrameArt = function()
 	-- UpdateBackdropSize, rather than stretched between two corners, which would
 	-- distort the art since the frame's aspect never matches the texture's.
 	local backdrop = GameMenuFrame:CreateTexture(nil, "BACKGROUND")
-	backdrop:SetTexture(TEX_BACKDROP)
+	backdrop:SetTexture(BackdropForStyle())
 	backdrop:SetPoint("CENTER", GameMenuFrame, "CENTER",
 		(CFG.bgPadLeft - CFG.bgPadRight) / 2, (CFG.bgPadTop - CFG.bgPadBottom) / 2)
 	-- Tagged so the sweep in HideBlizzardChrome leaves it alone.
@@ -313,6 +324,17 @@ GameMenu.HideDim = function(self)
 	if (dimFrame) then
 		dimFrame:Hide()
 	end
+end
+GameMenu.UpdateArtwork = function(self)
+	if not GameMenuFrame then return end
+	if GameMenuFrame.diabolicBackdrop then GameMenuFrame.diabolicBackdrop:SetTexture(BackdropForStyle()) end
+	ForEachMenuButton(function(button)
+		if IsGameMenuButton(button) and button.diabolicTexture then
+			local art = TextureForLabel(button:GetText())
+			button.diabolicTexture:SetTexture(art)
+			button.diabolicHighlight:SetTexture(art)
+		end
+	end)
 end
 
 GameMenu.SkinFrame = function(self)
@@ -390,4 +412,5 @@ GameMenu.OnInitialize = function(self)
 	self:RegisterEvent("ADDON_LOADED", "OnEvent")
 	self:RegisterEvent("PLAYER_LOGIN", "OnEvent")
 	self:RegisterEvent("PLAYER_REGEN_ENABLED", "OnEvent")
+	ns.RegisterCallback(self, "OrbStyle_Updated", "UpdateArtwork")
 end

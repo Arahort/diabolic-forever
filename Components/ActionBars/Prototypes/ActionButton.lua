@@ -1,6 +1,6 @@
 ﻿local Addon, ns = ...
 local ActionBars = ns:GetModule("ActionBars")
-local ButtonMod = ActionBars:NewModule("Buttons")
+local ButtonMod = ActionBars:NewModule("Buttons", "LibMoreEvents-1.0")
 local LAB = LibStub("LibActionButton-1.0")
 local LAB_Version = LibStub.minors["LibActionButton-1.0"]
 
@@ -48,6 +48,50 @@ local buttonConfig = {
 local ActionButton = {}
 ns.ActionButton = ActionButton
 ns.ActionButtons = {}
+ActionButton.ApplyCooldownAppearance = function(button)
+	if not ns.IsForever or not button.overlay then return end
+	local cooldown = button.cooldown
+	if not cooldown then return end
+	-- LAB refreshes its default anchors when the secure action page changes.
+	for _, frame in pairs({ cooldown, button.chargeCooldown, button.lossOfControlCooldown }) do
+		frame:ClearAllPoints()
+		frame:SetAllPoints(button.icon)
+	end
+	local showNumbers = C_CVar.GetCVarBool("countdownForCooldowns")
+	cooldown:SetHideCountdownNumbers(not showNumbers)
+	local font = GetFont(20, true)
+	if cooldown.SetCountdownFont then cooldown:SetCountdownFont(font:GetName()) end
+	local text = cooldown.GetCountdownFontString and cooldown:GetCountdownFontString()
+	if text then
+		text:SetFontObject(font)
+		text:SetDrawLayer("OVERLAY", 7)
+		text:ClearAllPoints()
+		text:SetPoint("CENTER", cooldown, "CENTER", 1, 0)
+		text:SetJustifyH("CENTER")
+		text:SetJustifyV("MIDDLE")
+		text:SetTextColor(250/255, 250/255, 250/255)
+	end
+end
+ButtonMod.QueueActionRefresh = function(self, event)
+	if self.actionRefreshPending then return end
+	if event then
+		local form, page, bonus = GetShapeshiftForm(), GetActionBarPage(), GetBonusBarOffset()
+		local secret = issecretvalue and (issecretvalue(form) or issecretvalue(page) or issecretvalue(bonus))
+		if not secret then
+			if event ~= "PLAYER_ENTERING_WORLD" and form == self.lastForm and page == self.lastPage and bonus == self.lastBonus then return end
+			self.lastForm, self.lastPage, self.lastBonus = form, page, bonus
+		end
+	end
+	self.actionRefreshPending = true
+	C_Timer.After(0, function()
+		self.actionRefreshPending = nil
+		-- Bonus-page contents settle after the form event and secure ChildUpdate.
+		-- UpdateAction only refreshes LAB/native UI registration, not secure states.
+		for button in next, ns.ActionButtons do
+			if button.header and button.header.id == 1 then button:UpdateAction(true) end
+		end
+	end)
+end
 
 -- Tooltip wrapper functions to preserve LibActionButton tooltips
 local onEnter = function(self)
@@ -212,6 +256,17 @@ ButtonMod.HandleMaxDps = function(self)
 end
 
 ButtonMod.OnEvent = function(self, event, ...)
+	if ns.IsForever then
+		if event == "CVAR_UPDATE" then
+			local cvar = ...
+			if cvar == "countdownForCooldowns" then
+				for button in next, ns.ActionButtons do ActionButton.ApplyCooldownAppearance(button) end
+			end
+			return
+		elseif event == "UPDATE_SHAPESHIFT_FORM" or event == "UPDATE_BONUS_ACTIONBAR" or event == "ACTIONBAR_PAGE_CHANGED" or event == "PLAYER_ENTERING_WORLD" then
+			self:QueueActionRefresh(event)
+		end
+	end
 	if (event == "ADDON_LOADED") then
 		local addon = ...
 		if (addon == "MaxDps") then
@@ -242,6 +297,7 @@ ButtonMod.OnEvent = function(self, event, ...)
 	elseif (event == "OnButtonUpdate") then
 		local button = ...
 		if (ns.ActionButtons[button]) then
+			ActionButton.ApplyCooldownAppearance(button)
 			UpdateUsable(button)
 			if (self.MaxDps) then
 				if (not button:GetTexture()) then
@@ -263,6 +319,13 @@ ButtonMod.OnEvent = function(self, event, ...)
 end
 
 ButtonMod.OnInitialize = function(self)
+	if ns.IsForever then
+		self:RegisterEvent("CVAR_UPDATE", "OnEvent")
+		self:RegisterEvent("PLAYER_ENTERING_WORLD", "OnEvent")
+		self:RegisterEvent("UPDATE_SHAPESHIFT_FORM", "OnEvent")
+		self:RegisterEvent("UPDATE_BONUS_ACTIONBAR", "OnEvent")
+		self:RegisterEvent("ACTIONBAR_PAGE_CHANGED", "OnEvent")
+	end
 
 	if (MaxDps) then
 		self:HandleMaxDps()

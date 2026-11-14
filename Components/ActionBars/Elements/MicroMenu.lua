@@ -44,7 +44,24 @@ MicroMenu.GetToggleAlpha = function(self)
 	local db = ns.db
 	return (db and db.global.micromenu.toggleAlpha) or 0.3
 end
+MicroMenu.UpdateArtwork = function(self)
+	local backdrop = self.bar and self.bar.backdrop
+	if not backdrop then return end
+	local stone = ns.IsForever and ns.db and ns.API.IsStoneStyle()
+	backdrop:SetBackdrop({
+		bgFile = stone and GetMedia("arahort-stone/micromenu-background", "png") or [[Interface\Tooltips\UI-Tooltip-Background]],
+		edgeSize = 32, edgeFile = stone and GetMedia("arahort-stone/border-tooltip", "png") or GetMedia("border-tooltip"),
+		tile = not stone,
+		insets = { left = 8, right = 8, top = 16, bottom = 16 }
+	})
+	if stone then backdrop:SetBackdropColor(1, 1, 1, .9) else backdrop:SetBackdropColor(.05, .05, .05, .85) end
+end
 MicroMenu.ApplyEditModeState = function(self, editing)
+	if ns.StoneHUD and ns.StoneHUD:IsActive() then
+		if self.bar then self.bar.inEditMode = nil end
+		ns.StoneHUD:RequestRefresh()
+		return
+	end
 	self.pendingEditModeState, self.hasPendingEditModeState = editing, true
 	if self.bar then self.bar.inEditMode = editing or nil end
 	if InCombatLockdown() or not self.toggle or not self.bar then return end
@@ -100,6 +117,7 @@ MicroMenu.LayoutForeverMicroMenu = function(self)
 		if self.toggle.texture then self.toggle.texture:SetSize(60 * scale, 60 * scale) end
 	end
 	self.__foreverLayoutUpdating = nil
+	if ns.StoneHUD then ns.StoneHUD:Refresh() end
 end
 MicroMenu.UpdateLayout = function(self)
 	if ns.IsForever then return self:LayoutForeverMicroMenu() end
@@ -182,16 +200,10 @@ MicroMenu.InitializeMicroMenu = function(self)
 	-- Dark backdrop with overshoot for border-tooltip edge art
 	local backdrop = CreateFrame("Frame", nil, bar, ns.BackdropTemplate)
 	backdrop:SetFrameLevel(bar:GetFrameLevel())
-	backdrop:SetBackdrop({
-		bgFile = [[Interface\Tooltips\UI-Tooltip-Background]],
-		edgeSize = 32, edgeFile = GetMedia("border-tooltip"),
-		tile = true,
-		insets = { left = 8, right = 8, top = 16, bottom = 16 }
-	})
-	backdrop:SetBackdropColor(.05, .05, .05, .85)
 	backdrop:SetPoint("TOPLEFT", bar, "TOPLEFT", -6, 6)
 	backdrop:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", 6, -6)
 	bar.backdrop = backdrop
+	self:UpdateArtwork()
 	-- Reparent and resize micro buttons vertically inside our container
 	bar.buttons = {}
 	local btnSize = self:GetButtonSize()
@@ -294,7 +306,10 @@ MicroMenu.InitializeMicroMenu = function(self)
 		self:UpdateAlpha()
 	end
 	toggle.UpdateAlpha = function(self)
-		if (self.mouseOver) or (bar:IsShown()) then
+		local stone = ns.StoneHUD and ns.StoneHUD:IsActive()
+		if self.stoneHighlight then self.stoneHighlight:SetShown(stone and self.mouseOver or false) end
+		if stone then self.texture:SetAlpha((self.mouseOver or bar:IsShown()) and 1 or .85) end
+		if stone or (self.mouseOver) or (bar:IsShown()) then
 			self:SetAlpha(1)
 		else
 			self:SetAlpha(MicroMenu:GetToggleAlpha())
@@ -383,6 +398,7 @@ MicroMenu.InitializeMicroMenu = function(self)
 	end
 	self:RegisterEvent("PLAYER_REGEN_ENABLED", "OnCombatEnd")
 	ns.RegisterCallback(self, "MicroMenu_Settings_Updated", "OnSettingsUpdated")
+	ns.RegisterCallback(self, "OrbStyle_Updated", "UpdateArtwork")
 	-- EditMode integration
 	local LibEditMode = ns.LibEditMode
 	if (LibEditMode and LibEditMode.AddFrame) then
@@ -390,11 +406,12 @@ MicroMenu.InitializeMicroMenu = function(self)
 		toggle.editModeName = "Diabolic: Micro Menu"
 		LibEditMode:AddFrame(toggle, function(frame, layoutName, point, x, y)
 			if (InCombatLockdown()) then return end
+			if ns.StoneHUD and ns.StoneHUD:IsActive() then ns.StoneHUD:RequestRefresh(); return end
 			local db = ns.db.char.micromenu
 			db.positionPoint = point
 			db.positionX = x
 			db.positionY = y
-		end, {point = "BOTTOMRIGHT", x = -11, y = 11})
+		end, ns:GetDefaultPosition("char.micromenu"))
 		-- The shared template defaults to MEDIUM, but this toggle is HIGH.
 		-- Put the selection above it instead of disabling a protected button's mouse.
 		local selection = LibEditMode.frameSelections[toggle]
@@ -411,7 +428,7 @@ MicroMenu.InitializeMicroMenu = function(self)
 				kind = LibEditMode.SettingType.Slider,
 				name = L["MicroMenuButtonSize"],
 				desc = L["MicroMenuButtonSizeDesc"],
-				default = 34,
+				default = ns:GetDefaultSetting("global.micromenu", "buttonSize"),
 				minValue = 20,
 				maxValue = 50,
 				valueStep = 1,
@@ -446,6 +463,7 @@ MicroMenu.InitializeMicroMenu = function(self)
 		toggle:ClearAllPoints()
 		toggle:SetPoint(posPoint, UIParent, posPoint, posX, posY)
 	end
+	if ns.StoneHUD then ns.StoneHUD:Refresh() end
 end
 
 MicroMenu.OnSettingsUpdated = function(self)
@@ -589,6 +607,7 @@ MicroMenu.OnEnable = function(self)
 		self.toggle:ClearAllPoints()
 		self.toggle:SetPoint(posPoint, UIParent, posPoint, posX, posY)
 	end
+	if ns.StoneHUD then ns.StoneHUD:Refresh() end
 end
 MicroMenu.InitializeForeverAfterWorld = function(self)
 	C_Timer.After(0, function()

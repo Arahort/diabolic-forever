@@ -1,5 +1,46 @@
 # Diabolic UI Forever changelog
 
+## [6.6.6-r3] - 2026-11-14
+
+Alpha prerelease for **WoW Forever 1.60.1 (70938), Interface 16001**.
+
+### Added
+
+- **Stone Light, Stone Dark and Succubus** styles, including orb sculptures, matching action bars, menus, tooltips, stance buttons, minimap and native Damage Meter artwork.
+- Compact Crypt Reliquary target and group frames, a centered 3D target portrait with a 2D fallback, and an integrated target-of-target panel.
+- Independent combo-point displays at the resource/health orb and, for Stone-family styles, below hostile targets. Point count follows the supported resource maximum.
+- Saved per-character artwork positioning with `/succubus X Y` and `/succubusbuttons X Y`, including localized help and reset commands.
+- A toggle for retaining Blizzard's standard Damage Meter appearance.
+
+### Changed
+
+- Replaced the separate Diablo 2/effect checkboxes with a live style dropdown, and the secondary/third action-bar checkboxes with a live one/two/three-row dropdown.
+- Reworked the minimap XP/rested arc with defined ends, brass edge rails and dividers, hover-only display, and live thickness/transparency settings.
+- Added matching Stone-family castbar artwork, larger overlapping icons and consistent side-panel borders.
+- Made target aura size independent of target-frame scale and adjusted aura spacing dynamically around the target-of-target frame and castbar.
+- Applied the tested Succubus default layout, two action-bar rows, revised scales, frame positions and minimap-button collection settings. World-map player coordinates remain enabled by default.
+- Unified Settings and Edit Mode reset values with the canonical addon defaults; preserved explicit pre-dropdown Legacy/Diablo 2 selections during migration.
+- Kept native class-resource color selection for the resource orb and native cast-time visibility settings.
+- Temporarily disabled the custom player-debuff frame while retaining its saved settings.
+
+### Fixed
+
+- Removed the player-castbar write to Blizzard's `showCastTimeSetting` that tainted the shared Edit Mode refresh and led to native aura/Damage Meter secret-value errors.
+- Avoided native Edit Mode scale/anchor overrides that write shared manager state.
+- Restored cooldown/state refresh across action-page and druid-form changes, and respected Blizzard's cooldown-number setting.
+- Added native incoming-heal prediction to target and group-frame health bars.
+- Corrected target level/name/health-text alignment, native level-difficulty colors and player-faction icon placement.
+- Corrected side-panel button/slot alignment, hover states, tooltip cursor clearance and party leader-icon positioning.
+- Prevented the replaced honor presentation from returning after battleground transitions.
+- Made `/diabolicforever taintstop` explicitly disable native capture and report its actual state.
+
+### Validation and remaining limitations
+
+- The reported Edit Mode plus combat reproduction passed on build 70938 after the castbar fix: no new BugGrabber errors or new taint in the checked aura/Damage Meter fields.
+- The new defaults were checked with the bundled AceDB for clean installs, new characters and an existing character save; this is separate from in-game testing.
+- This remains an alpha. Other classes, extended dungeon/raid combat, combat group changes and individual 3D models still require broader testing.
+- The older protected `PlayerSpellsFrame:SetWidth()` report remains pending reproduction.
+
 ## [6.6.6-r1] - 2026-11-08
 
 First public **alpha prerelease**, targeting **WoW Forever 1.60.1 (70862), Interface 16001**. This entry consolidates the local Forever development builds into one public release. Broader combat and class-specific testing is still required.

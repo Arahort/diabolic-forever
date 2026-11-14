@@ -168,7 +168,25 @@ local Backdrops = setmetatable({}, { __index = function(t,k)
 	rawset(t,k,bg)
 	return bg
 end })
-
+local function GetTooltipBackdrop()
+	local stone = ns.IsForever and ns.db and ns.API.IsStoneStyle()
+	return {
+		bgFile = [[Interface\Tooltips\UI-Tooltip-Background]],
+		edgeSize = 32, edgeFile = stone and GetMedia("arahort-stone/border-tooltip", "png") or GetMedia("border-tooltip"),
+		tile = true,
+		insets = { left = 8, right = 8, top = 16, bottom = 16 }
+	}
+end
+Tooltips.UpdateStyle = function(self)
+	for tooltip, backdrop in pairs(Backdrops) do
+		if not tooltip:IsForbidden() then
+			pcall(function()
+				backdrop:SetBackdrop(GetTooltipBackdrop())
+				backdrop:SetBackdropColor(.05, .05, .05, .95)
+			end)
+		end
+	end
+end
 Tooltips.SetBackdropStyle = function(self, tooltip)
 	if (not tooltip) or (tooltip.IsEmbedded) or (tooltip:IsForbidden()) then return end
 
@@ -249,12 +267,7 @@ Tooltips.SetBackdropStyle = function(self, tooltip)
 	-- when other addons modify tooltip dimensions (Syndicator, Chattynator, etc.)
 	pcall(function()
 		backdrop:SetBackdrop(nil)
-		backdrop:SetBackdrop({
-			bgFile = [[Interface\Tooltips\UI-Tooltip-Background]],
-			edgeSize = 32, edgeFile = GetMedia("border-tooltip"),
-			tile = true,
-			insets = { left = 8, right = 8, top = 16, bottom = 16 }
-		})
+		backdrop:SetBackdrop(GetTooltipBackdrop())
 	end)
 	backdrop:ClearAllPoints()
 	backdrop:SetPoint("LEFT", -10, 0)
@@ -645,12 +658,92 @@ end
 local TOOLTIP_UPDATE_THROTTLE = 0.033 -- ~30 updates per second for smooth tooltip following
 -- WoW 12.0: Cache for tooltip dimensions when they are not secret
 local tooltipSizeCache = {}
+local function IsPublicPositive(value)
+	return not issecretvalue(value) and type(value) == "number" and value > 0
+end
+local function RestoreCursorClamping(tooltip)
+	local state = tooltip.__DiabolicCursorPlacement
+	if state then
+		tooltip:SetClampedToScreen(state.clamped)
+		tooltip.__DiabolicCursorPlacement = nil
+	end
+end
+local function UpdateForeverTooltip(tooltip, settings)
+	local scale = tooltip:GetEffectiveScale()
+	local parentScale = UIParent:GetEffectiveScale()
+	if not IsPublicPositive(parentScale) then return end
+	if not IsPublicPositive(scale) then scale = ns.API.GetScale() end
+	if not IsPublicPositive(scale) then scale = parentScale end
+	local screenWidth, screenHeight = UIParent:GetWidth(), UIParent:GetHeight()
+	if not IsPublicPositive(screenWidth) or not IsPublicPositive(screenHeight) then return end
+	screenWidth, screenHeight = screenWidth * parentScale / scale, screenHeight * parentScale / scale
+	local cursorX, cursorY = GetCursorPosition()
+	cursorX, cursorY = cursorX / scale, cursorY / scale
+	local guard, margin = 20 / scale, 2 / scale
+	local gapX = math.max(guard, math.abs(settings.x or 32))
+	local gapY = math.max(guard, math.abs(settings.y or -32))
+	local padLeft, padRight, padTop, padBottom = 10, 10, 18, 24
+	if not tooltip.__DiabolicCursorPlacement then
+		tooltip.__DiabolicCursorPlacement = { clamped = tooltip:IsClampedToScreen() }
+	end
+	-- Native clamping can pull the entire frame back over the cursor after SetPoint.
+	-- Placement below clamps the complete custom backdrop instead of the tooltip body.
+	tooltip:SetClampedToScreen(false)
+	local function Place(point, x, y)
+		tooltip:ClearAllPoints()
+		tooltip:SetPoint(point, UIParent, "BOTTOMLEFT", x, y)
+	end
+	local function OutwardAnchor()
+		local right = cursorX <= screenWidth / 2
+		local above = cursorY <= screenHeight / 2
+		local point = (above and "BOTTOM" or "TOP") .. (right and "LEFT" or "RIGHT")
+		Place(point, cursorX + (right and gapX + padLeft or -gapX - padRight), cursorY + (above and gapY + padBottom or -gapY - padTop))
+	end
+	local width, height = tooltip:GetWidth(), tooltip:GetHeight()
+	if not IsPublicPositive(width) or not IsPublicPositive(height) then
+		-- An outward corner remains safe even if secret content changes the real size.
+		-- Do not reuse an older, smaller size or leave the native cursor anchor active.
+		OutwardAnchor()
+		return
+	end
+	local fullWidth, fullHeight = width + padLeft + padRight, height + padTop + padBottom
+	local anchor = settings.anchor or "TOPLEFT"
+	local horizontal = anchor:find("RIGHT", 1, true) and -1 or 1
+	local vertical = anchor:find("TOP", 1, true) and -1 or 1
+	local candidates = {}
+	if anchor == "LEFT" or anchor == "RIGHT" then
+		candidates[#candidates+1] = { horizontal, 0 }
+	elseif anchor == "TOP" or anchor == "BOTTOM" then
+		candidates[#candidates+1] = { 0, vertical }
+	end
+	for _, side in ipairs({ {horizontal,vertical}, {horizontal,-vertical}, {-horizontal,vertical}, {-horizontal,-vertical}, {horizontal,0}, {-horizontal,0}, {0,vertical}, {0,-vertical} }) do
+		candidates[#candidates+1] = side
+	end
+	for _, side in ipairs(candidates) do
+		local left = side[1] > 0 and cursorX + gapX or side[1] < 0 and cursorX - gapX - fullWidth or cursorX - fullWidth / 2
+		local bottom = side[2] > 0 and cursorY + gapY or side[2] < 0 and cursorY - gapY - fullHeight or cursorY - fullHeight / 2
+		left = math.max(margin, math.min(left, screenWidth - margin - fullWidth))
+		bottom = math.max(margin, math.min(bottom, screenHeight - margin - fullHeight))
+		local right, top = left + fullWidth, bottom + fullHeight
+		local h = right <= cursorX - guard and -1 or left >= cursorX + guard and 1 or 0
+		local v = top <= cursorY - guard and -1 or bottom >= cursorY + guard and 1 or 0
+		if right <= screenWidth - margin and top <= screenHeight - margin and (h ~= 0 or v ~= 0) then
+			-- Anchor the separating side, so later content growth also moves away from the cursor.
+			local point = (v > 0 and "BOTTOM" or v < 0 and "TOP" or "") .. (h > 0 and "LEFT" or h < 0 and "RIGHT" or "")
+			local x = h > 0 and left + padLeft or h < 0 and right - padRight or left + padLeft + width / 2
+			local y = v > 0 and bottom + padBottom or v < 0 and top - padTop or bottom + padBottom + height / 2
+			Place(point, x, y)
+			return
+		end
+	end
+	OutwardAnchor()
+end
 local updateTooltip = function(tooltip, elapsed)
 	if not tooltip.update then return end
 	if not ns.db or not ns.db.char or not ns.db.char.tooltips then return end
 	if not ns.db.char.tooltips.enabled then return end
 	-- Throttle OnUpdate calls (elapsed is only passed from OnUpdate, not direct calls)
-	if elapsed then
+	if elapsed and not ns.IsForever then
 		tooltip.updateElapsed = (tooltip.updateElapsed or 0) + elapsed
 		if tooltip.updateElapsed < TOOLTIP_UPDATE_THROTTLE then
 			return
@@ -658,6 +751,10 @@ local updateTooltip = function(tooltip, elapsed)
 		tooltip.updateElapsed = 0
 	end
 	local settings = ns.db.char.tooltips
+	if ns.IsForever then
+		UpdateForeverTooltip(tooltip, settings)
+		return
+	end
 	local scale = UIParent:GetEffectiveScale()
 	local mX, mY = GetCursorPosition()
 	mX, mY = mX / scale + settings.x, mY / scale + settings.y
@@ -732,7 +829,10 @@ Tooltips.SetDefaultAnchor = function(self, tooltip, parent)
 	-- WoW 12.0.0: Wrap all tooltip operations in pcall to prevent taint errors
 	local success = pcall(function()
 		if ns.db and ns.db.char and ns.db.char.tooltips and ns.db.char.tooltips.enabled then
-			if parent.unit then
+			if ns.IsForever then
+				tooltip:SetOwner(parent or UIParent, "ANCHOR_NONE")
+				tooltip.update = true
+			elseif parent.unit then
 				tooltip:SetOwner(parent, "ANCHOR_PRESERVE")
 			else
 				tooltip:SetOwner(parent, "ANCHOR_CURSOR")
@@ -746,9 +846,11 @@ Tooltips.SetDefaultAnchor = function(self, tooltip, parent)
 				tooltip:HookScript("OnUpdate", updateTooltip)
 				tooltip:HookScript("OnHide", function()
 					tooltip.update = false
+					if ns.IsForever then RestoreCursorClamping(tooltip) end
 				end)
 			end
 		else
+			if ns.IsForever then RestoreCursorClamping(tooltip) end
 			tooltip:SetOwner(parent, "ANCHOR_NONE")
 			tooltip:SetPoint("BOTTOMRIGHT", -40, 40)
 		end
@@ -842,5 +944,6 @@ Tooltips.OnEnable = function(self)
 	if ns.RegisterCallback then
 		ns.RegisterCallback(self, "Saved_Settings_Updated", "UpdateSettings")
 		ns.RegisterCallback(self, "Tooltips_Settings_Updated", "UpdateSettings")
+		ns.RegisterCallback(self, "OrbStyle_Updated", "UpdateStyle")
 	end
 end
