@@ -1,5 +1,16 @@
 # Diabolic UI Forever changelog
 
+## [6.6.6-r4] - 2026-11-14
+
+Release for **WoW Forever 1.60.1 (70938), Interface 16001**.
+
+### Changed
+
+- Promoted the distribution status from Alpha prerelease to Release.
+- Updated the GitHub workflow to publish ordinary releases and mark the current release as Latest.
+- Updated the status badge, addon metadata and public documentation to match the release status.
+- Kept the gameplay code, artwork, defaults and existing testing limitations unchanged from `6.6.6-r3`.
+
 ## [6.6.6-r3] - 2026-11-14
 
 Alpha prerelease for **WoW Forever 1.60.1 (70938), Interface 16001**.

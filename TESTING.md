@@ -1,6 +1,6 @@
 # Testing Diabolic UI Forever
 
-This guide covers public alpha **6.6.6-r3** on **WoW Forever 1.60.1 (70938), Interface 16001**. Test in the Forever client. Compatibility with another client or build is not implied.
+This guide covers public release **6.6.6-r4** on **WoW Forever 1.60.1 (70938), Interface 16001**. Test in the Forever client. Compatibility with another client or build is not implied.
 
 ## Before testing
 
@@ -34,7 +34,7 @@ The previously reported Edit Mode/combat taint reproduction passed after the pla
 
 ## Diagnostics
 
-Diagnostic recording is enabled in this alpha and keeps the latest **150 snapshots**. These include client/build information, available APIs, active library versions, relevant frame state and chosen native fallbacks. Secret values are marked rather than evaluated.
+Diagnostic recording is enabled in this release and keeps the latest **150 snapshots**. These include client/build information, available APIs, active library versions, relevant frame state and chosen native fallbacks. Secret values are marked rather than evaluated.
 
 | Command | Effect |
 |---|---|

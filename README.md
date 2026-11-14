@@ -2,16 +2,16 @@
   <img src="DiabolicUI_logo.png" alt="Diabolic UI Forever" />
 </p>
 
-[![Version](https://img.shields.io/github/v/release/Arahort/diabolic-forever?include_prereleases&label=Version)](https://github.com/Arahort/diabolic-forever/releases)
+[![Version](https://img.shields.io/github/v/release/Arahort/diabolic-forever?label=Version)](https://github.com/Arahort/diabolic-forever/releases)
 [![WoW Forever](https://img.shields.io/badge/WoW%20Forever-1.60.1%20%2870938%29-blue)](https://github.com/Arahort/diabolic-forever)
-[![Status](https://img.shields.io/badge/Status-Alpha-orange)](https://github.com/Arahort/diabolic-forever/releases)
+[![Status](https://img.shields.io/badge/Status-Release-brightgreen)](https://github.com/Arahort/diabolic-forever/releases)
 [![Discord](https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white)](https://discord.com/channels/407765646634385408/1478671797695025272)
 
 # Diabolic UI — Forever
 
 An orb-based graphical interface for **World of Warcraft: Forever**, with Diablo-inspired artwork and modern native UI integration.
 
-**Current alpha: `6.6.6-r3`, targeting Forever `1.60.1` (build `70938`, Interface `16001`).** The reported Edit Mode/combat taint reproduction passed after the castbar fix. Wider class, dungeon/raid and combat-transition testing is still needed.
+**Current release: `6.6.6-r4`, targeting Forever `1.60.1` (build `70938`, Interface `16001`).** The reported Edit Mode/combat taint reproduction passed after the castbar fix. Wider class, dungeon/raid and combat-transition testing is still needed.
 
 ## About this fork
 
@@ -58,7 +58,7 @@ Outside combat, `/succubus X Y` moves the sculpture and eye glow; `/succubusbutt
 
 Use either command without arguments to view its saved position. `/succubus reset` restores `-6 -4`; `/succubusbuttons reset` restores `-65 0`.
 
-## Alpha status and known issues
+## Release status and known issues
 
 - The repeated aura/Damage Meter errors after Edit Mode were addressed by removing an unsafe player-castbar setting write. The reported Edit Mode/combat test passed on build 70938; please report any recurrence.
 - An older protected-call report involving `PlayerSpellsFrame:SetWidth()` still needs reproduction.
@@ -71,7 +71,7 @@ See [TESTING.md](TESTING.md) for checks and diagnostic commands. Static checks a
 
 Use [GitHub Issues](https://github.com/Arahort/diabolic-forever/issues). Include the addon version, exact client build, steps to reproduce, combat state, screenshots and the full error stack when available.
 
-Bounded diagnostics are enabled in this alpha. `/diabolicforever snapshot` captures additional state; `/diabolicforever stop` stops recording. Records are written to SavedVariables on `/reload` or normal logout. [Diagnostic instructions](TESTING.md#diagnostics) explain where to find them.
+Bounded diagnostics are enabled in this release. `/diabolicforever snapshot` captures additional state; `/diabolicforever stop` stops recording. Records are written to SavedVariables on `/reload` or normal logout. [Diagnostic instructions](TESTING.md#diagnostics) explain where to find them.
 
 ## Credits and licenses
 

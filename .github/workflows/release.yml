@@ -1,4 +1,4 @@
-name: Build Forever prerelease
+name: Build Forever release
 on:
   push:
     tags:
@@ -28,13 +28,13 @@ jobs:
         run: git merge-base --is-ancestor HEAD origin/main
       - name: Validate and build tracked addon snapshot
         run: python scripts/build_release.py --tag "$RELEASE_TAG"
-      - name: Publish alpha prerelease
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
-          name: DiabolicUI3 Forever ${{ env.RELEASE_TAG }} Alpha
+          name: DiabolicUI3 Forever ${{ env.RELEASE_TAG }}
           files: dist/DiabolicUI3-Forever.zip
           body_path: dist/release-notes.md
-          prerelease: true
-          make_latest: false
+          prerelease: false
+          make_latest: true
           fail_on_unmatched_files: true
