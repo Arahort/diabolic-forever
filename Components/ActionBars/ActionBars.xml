@@ -13,6 +13,7 @@
 
 	<Script file="Elements\ActionBars.lua"/>
 	<Script file="Elements\PetBar.lua"/>
+	<Script file="Elements\ForeverPet.lua"/>
 	<!-- <Script file="Elements\StanceBar.lua"/> -->
 	<Script file="Elements\StanceButtons.lua"/>
 	<Script file="Elements\ExtraButtons.lua"/>

@@ -11,7 +11,7 @@
 
 An orb-based graphical interface for **World of Warcraft: Forever**, with Diablo-inspired artwork and modern native UI integration.
 
-**Current release: `6.6.6-r4`, targeting Forever `1.60.1` (build `70938`, Interface `16001`).** The reported Edit Mode/combat taint reproduction passed after the castbar fix. Wider class, dungeon/raid and combat-transition testing is still needed.
+**Current release: `6.6.6-r5`, targeting Forever `1.60.1` (build `70938`, Interface `16001`).** Includes the restored pet health orb and class-themed pet bar. Wider class, dungeon/raid and combat-transition testing is still needed.
 
 ## About this fork
 
@@ -24,6 +24,7 @@ Forever uses modern UI APIs despite its `1.60.1` version number. This edition us
 - Legacy, Diablo 2, Stone Light, Stone Dark and Succubus styles, with live switching, health/resource orbs and optional 3D models.
 - Native resource-type colors and incoming-heal, absorb and heal-absorb displays, including healing prediction on target and group frames.
 - Live one/two/three-row action bars, hidden-bar hotkeys, form/page updates and native cooldown-number integration.
+- A Retail-shaped pet health orb and compact class-themed pet bar, with native Blizzard pet actions/autocast, an Edit Mode scale slider and `/diabolicpet` visual previews.
 - A styled native player castbar with cast/channel time and a separate Edit Mode mover.
 - Compact Stone-family target/ToT and group frames, a centered 3D portrait with 2D fallback, and independently sized target auras. The custom player-debuff frame is temporarily disabled.
 - A hover-only clockwise minimap XP/rested arc with defined ends and brass rails. Thickness and transparency update live from the **Minimap Edit Mode window**.

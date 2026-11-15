@@ -258,6 +258,8 @@ local function snapshot(reason)
 		state.minimapExperience = { active = value(xp.active), current = value(xp.currentXP), maximum = value(xp.maximumXP), fraction = value(xp.fraction), rested = value(xp.rested), radius = value(xp.radius), atlas = value(xp.atlas), thickness = value(xp.thickness), transparency = value(xp.transparency) }
 	end
 	state.frames.PlayerUnitFrame = inspect(player)
+	state.frames.PetUnitFrame = inspect(_G.DiabolicUnitFramePet)
+	state.frames.PetBarAnchor = inspect(_G.DiabolicUI3PetBarAnchor)
 	state.frames.TargetUnitFrame = inspect(_G.DiabolicUnitFrameTarget)
 	local target = _G.DiabolicUnitFrameTarget
 	local layout = target and target.Cathedral and target.Cathedral.layout

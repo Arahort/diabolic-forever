@@ -1,5 +1,31 @@
 # Diabolic UI Forever changelog
 
+## [6.6.6-r5] - 2026-11-15
+
+Release for **WoW Forever 1.60.1 (70938), Interface 16001**.
+
+### Added
+
+- Restored the pet health orb in Forever, including the supported hunter happiness indicator.
+- Added compact Trophy Rail pet-bar artwork for all five themes, with hunter, warlock and default class variants and theme-matched metal colours.
+- Added a movable pet-bar selection and scale slider in Edit Mode, including a visible preview without an active pet.
+- Kept `/diabolicpet` visual testing commands for future development: class previews, adjustable preview health, saved bar/orb positions, automatic orb-position reset and status output. Command help is translated in all 12 locales.
+- Added the custom pet unit frame and pet-bar anchor to Forever diagnostic snapshots.
+
+### Fixed
+
+- Retained Blizzard's native pet buttons, event handlers, keybinds, cooldowns and autocast beneath the custom pet-bar artwork.
+- Attached each decorative slot to its actual button and scaled the end decorations with button size; added an opaque backing across the full row.
+- Kept the pet orb's Retail geometry and exact border alpha mask. Stone Light, Stone Dark and Succubus use their matching border material without additional darkening.
+- Matched the pet-orb preview's parent, scale and background layering to the live orb, and refreshed its Retail position when switching between one, two and three action-bar rows.
+- Removed the preview's dependence on hidden native button anchors and raised the Edit Mode selection above the preview.
+- Restricted protected position/layout changes to out-of-combat execution and automatically closed visual previews when combat starts.
+
+### Validation
+
+- Pet-orb and pet-bar previews were reviewed in game; focused Lua 5.1, layout, command and combat-deferral checks passed.
+- Visual previews do not simulate pet actions. Hunter/warlock summon, dismiss, autocast and combat transitions still require testing with a real pet.
+
 ## [6.6.6-r4] - 2026-11-14
 
 Release for **WoW Forever 1.60.1 (70938), Interface 16001**.

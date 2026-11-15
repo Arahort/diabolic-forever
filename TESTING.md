@@ -1,6 +1,6 @@
 # Testing Diabolic UI Forever
 
-This guide covers public release **6.6.6-r4** on **WoW Forever 1.60.1 (70938), Interface 16001**. Test in the Forever client. Compatibility with another client or build is not implied.
+This guide covers public release **6.6.6-r5** on **WoW Forever 1.60.1 (70938), Interface 16001**. Test in the Forever client. Compatibility with another client or build is not implied.
 
 ## Before testing
 
@@ -31,6 +31,25 @@ Saved settings normally live at `_forever_/WTF/Account/<account>/SavedVariables/
 | Edit Mode | Select, drag, reset and reopen supported elements. Verify shared labels, settings and positions without secret-coordinate errors. |
 
 The previously reported Edit Mode/combat taint reproduction passed after the player-castbar fix on build 70938. Capture fresh logs if aura or Damage Meter secret-value errors recur; this result does not establish compatibility with every class or combat scenario.
+
+## Pet previews
+
+The visual preview commands remain available on every class without an active pet. Select **Diabolic: Pet Bar** in Edit Mode to move the bar or change its scale.
+
+| Command | Effect |
+|---|---|
+| `/diabolicpet show hunter` | Show the hunter bar and pet orb. |
+| `/diabolicpet show warlock` | Show the warlock bar and pet orb. |
+| `/diabolicpet show default` | Show the default class variant and pet orb. |
+| `/diabolicpet bar hunter` | Show the bar; `warlock` and `default` are also accepted. |
+| `/diabolicpet orb 50` | Show the orb at a specified health percentage, from 0 to 100. |
+| `/diabolicpet hide` | Close both previews; a real pet remains governed by normal visibility. |
+| `/diabolicpet status` | Print the selected preview class, bar position and orb size. |
+| `/diabolicpet barpos X Y` | Save the bar's position relative to the bottom centre of the screen. |
+| `/diabolicpet orbpos X Y` | Save a manual orb position relative to the bottom centre of the screen. |
+| `/diabolicpet orbpos reset` | Restore automatic Retail-style placement beside the health orb for one/two/three rows. |
+
+Preview labels and sample icons are test-only. Preview mode closes when combat starts. A visual preview cannot verify real pet clicks, cooldowns, autocast or summon/dismiss transitions; check those separately with a real pet.
 
 ## Diagnostics
 

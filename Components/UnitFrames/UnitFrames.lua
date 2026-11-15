@@ -553,9 +553,8 @@ UnitFrames.SpawnUnitFrames = function(self)
 		if ns.ForeverComboPoints then ns.ForeverComboPoints:Initialize(ns.UnitFramesByName["Player"], targetFrame, ns.UnitFramesByName["ToT"]) end
 
 		-- Spawn pet frame
-		local petFrame
-		if not ns.IsForever then petFrame = Spawn("pet", "Pet") end
-		local petUseOrb = ns.IsForever or (ns.db and ns.db.char and ns.db.char.pet and ns.db.char.pet.useOrbStyle)
+		local petFrame = Spawn("pet", "Pet")
+		local petUseOrb = ns.db and ns.db.char and ns.db.char.pet and ns.db.char.pet.useOrbStyle
 
 		-- If pet uses orb style, position it near player health orb
 		if petUseOrb and petFrame then
@@ -569,23 +568,7 @@ UnitFrames.SpawnUnitFrames = function(self)
 			-- Load saved position if the user has dragged the frame in EditMode before.
 			-- Otherwise use the auto-calculated position (relative to Player orb, depends on action bars).
 			local petDb = ns.db.char.pet
-			local hasSaved = petDb.orbPoint and petDb.orbPositionX and petDb.orbPositionY
-			if hasSaved then
-				petFrame:ClearAllPoints()
-				petFrame:SetPoint(petDb.orbPoint, UIParent, petDb.orbRelPoint or petDb.orbPoint, petDb.orbPositionX, petDb.orbPositionY)
-			else
-				local hasSecond = ns.db.char.actionbars and ns.db.char.actionbars.enableSecondary
-				local hasThird = ns.db.char.actionbars and ns.db.char.actionbars.enableThird
-				local petX, petY
-				if hasThird then
-					petX, petY = 220, 125
-				elseif hasSecond then
-					petX, petY = 265, 90
-				else
-					petX, petY = 280, 35
-				end
-				petFrame:SetPoint("RIGHT", ns.UnitFramesByName["Player"], "LEFT", petX, petY)
-			end
+			ns.API.UpdatePetOrbPosition(petFrame)
 
 			-- Apply saved size to every texture / child frame of the orb.
 			if (petFrame.UpdateOrbSize) then
@@ -1139,7 +1122,7 @@ UnitFrames.RestoreForeverNativeResources = function(self)
 	end
 	for _, name in ipairs({ "RogueComboPointBarFrame", "DruidComboPointBarFrame", "RuneFrame", "TotemFrame", "PetFrame" }) do
 		local frame = _G[name]
-		if frame and frame:GetParent() == PlayerFrame then
+		if frame and (name ~= "PetFrame" or ns.ForeverUseNativePetFrame) and frame:GetParent() == PlayerFrame then
 			-- Keep native events, unit watches and managed-layout visibility decisions.
 			frame:SetParent(container or UIParent)
 			if container and frame:IsShown() then container:AddManagedFrame(frame) end
@@ -1167,7 +1150,8 @@ UnitFrames.OnInitialize = function(self)
 			self.useNativeFrames = true
 			return
 		end
-		ns.ForeverUseNativePetFrame = true
+		ns.ForeverUseNativePetFrame = false
+		ns.ForeverNativeFallbacks.petFrame = "oUF pet frame with native health values and hunter happiness"
 		self:RestoreForeverNativeResources()
 	end
 	self:RegisterMetaFunctions()

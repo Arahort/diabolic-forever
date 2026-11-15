@@ -114,6 +114,36 @@ end
 -- Orb style (like player health orb but smaller and green)
 -- Reference proportions from 100px design: backdrop = 165 => ratio 1.65.
 local BACKDROP_RATIO = 1.65
+ns.API.GetPetMetalColor = function()
+	local style = ns.db.global.orbs.style
+	if style == "arahort-stone" then return .74, .70, .64 end
+	if style == "arahort-stone-dark" or style == "succubus" then return .46, .41, .35 end
+	return .50, .44, .34
+end
+ns.API.UpdatePetOrbArtwork = function(frame)
+	if not (frame and frame.isOrbStyle and frame.Health and frame.Health.Border) then return end
+	local stone = ns.IsForever and ns.API.IsStoneStyle()
+	local border = frame.Health.Border
+	-- Theme borders retain the Retail canvas and exact alpha mask; no geometry change.
+	border:SetTexture(stone and GetMedia("arahort-stone/orb-border", "png") or GetMedia("orb-border"))
+	border:SetTexCoord(0, 1, 0, 1)
+	border:SetVertexColor(1, 1, 1)
+end
+ns.API.UpdatePetOrbPosition = function(frame)
+	if not (frame and frame.isOrbStyle) or InCombatLockdown() then return end
+	local db = ns.db.char.pet
+	frame:ClearAllPoints()
+	if db.orbPoint and db.orbPositionX and db.orbPositionY then
+		frame:SetPoint(db.orbPoint, UIParent, db.orbRelPoint or db.orbPoint, db.orbPositionX, db.orbPositionY)
+	else
+		local player = ns.UnitFramesByName.Player
+		if not player then return end
+		local bars = ns.db.char.actionbars
+		local x, y = 280, 35
+		if bars.enableThird then x, y = 220, 125 elseif bars.enableSecondary then x, y = 265, 90 end
+		frame:SetPoint("RIGHT", player, "LEFT", x, y)
+	end
+end
 
 local StyleOrb = function(self, unit, id)
 	local db = ns.db and ns.db.char and ns.db.char.pet
@@ -194,7 +224,9 @@ local StyleOrb = function(self, unit, id)
 
 	-- Mark as orb style for positioning
 	self.isOrbStyle = true
+	ns.API.UpdatePetOrbArtwork(self)
 end
+ns.API.StylePetOrb = StyleOrb
 
 UnitStyles["Pet"] = function(self, unit, id)
 	-- Check setting for orb style
@@ -203,5 +235,11 @@ UnitStyles["Pet"] = function(self, unit, id)
 		StyleOrb(self, unit, id)
 	else
 		StyleClassic(self, unit, id)
+	end
+	if ns.IsForever then
+		local happiness = self:CreateTexture(nil, "OVERLAY")
+		happiness:SetSize(16, 16)
+		happiness:SetPoint("TOP", self, "BOTTOM", 0, -2)
+		self.Happiness = happiness
 	end
 end
