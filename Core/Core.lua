@@ -316,7 +316,7 @@ local SanitizeSettings = function(db)
 	db.char.actionbars.useExtendedBars = true
 	-- Migrate the former two-style toggle without overriding an existing selection.
 	local orbStyle = db.global.orbs.style
-	if (orbStyle ~= "legacy" and orbStyle ~= "diablo2" and orbStyle ~= "arahort-stone" and orbStyle ~= "arahort-stone-dark" and orbStyle ~= "succubus") then
+	if (orbStyle ~= "legacy" and orbStyle ~= "diablo2" and orbStyle ~= "arahort-stone" and orbStyle ~= "arahort-stone-dark" and orbStyle ~= "stone-and-bronze" and orbStyle ~= "stone-and-cupper" and orbStyle ~= "succubus") then
 		db.global.orbs.style = db.global.orbs.useD2RStyle and "diablo2" or "legacy"
 	end
 	db.global.orbs.useD2RStyle = db.global.orbs.style ~= "legacy"

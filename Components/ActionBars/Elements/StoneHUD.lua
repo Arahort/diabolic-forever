@@ -9,6 +9,7 @@ local function LeftDockOffset()
 	return ns.db and ns.db.global.orbs.style == "succubus" and -70 or 0
 end
 local function RightDockOffset()
+	if ns.db and ns.db.global.orbs.style == "stone-and-bronze" then return -35 end
 	return ns.db and ns.db.global.orbs.style == "succubus" and (70 + (ns.db.char.orbs.succubusButtonsX or -65)) or 0
 end
 local function RightDockY()
@@ -62,6 +63,12 @@ HUD.UpdateSocketPositions = function(self)
 		end
 		socket:SetShown(self:IsActive())
 	end
+	local front = player.Health.StoneSocketFront
+	if front then
+		local active = ns.db.global.orbs.style == "stone-and-bronze"
+		if active then front:SetTexture(GetMedia("arahort-stone/utility-frame-front", "png")) end
+		front:SetShown(active)
+	end
 end
 HUD.PreparePlayer = function(self, player)
 	self.player = player
@@ -72,6 +79,12 @@ HUD.PreparePlayer = function(self, player)
 			socket:SetSize(330, 330)
 			if index == 2 then socket:SetTexCoord(1, 0, 0, 1) end
 			orb.StoneSocket = socket
+			if index == 1 then
+				local front = player.Artwork.Overlay:CreateTexture(nil, "OVERLAY", nil, 2)
+				front:SetAllPoints(socket)
+				front:Hide()
+				orb.StoneSocketFront = front
+			end
 		end
 	end
 	self:UpdateSocketPositions()

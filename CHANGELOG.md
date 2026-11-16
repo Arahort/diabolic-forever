@@ -1,5 +1,34 @@
 # Diabolic UI Forever changelog
 
+## [6.6.6-r6] - 2026-11-16
+
+Release for **WoW Forever 1.60.1 (70938), Interface 16001**.
+
+### Added
+
+- Added **Stone and Bronze** and **Stone and Cupper** to the style selector, including matching action bars, menus, target/group frames, minimap, pet orb and class-themed pet bar.
+- Stone and Bronze combines dark stone with bronze contours and inlays, plus new angel/demon sculptures, pulsing eye layers and calibrated artwork/button placement.
+- Stone and Cupper uses a separate warm copper palette, including its angel and demon.
+
+### Changed
+
+- Gave Legacy and Diablo 2 combo-point chains their own darker metal palettes while preserving their shapes and transparency.
+- Added dedicated dark Legacy Damage Meter borders, skulls, chains, header and row textures. Native class-coloured fills and Blizzard data handling remain unchanged.
+- Updated the combo-point setting description in all 12 locales.
+
+### Fixed
+
+- Fixed a texture-ID/RGB overload error when restoring target bars after leaving a Stone-family theme. Single numeric texture IDs, including negative cached IDs, now remain textures.
+- Initialized combo points before optional target styling and refreshed point visibility before dependent placement updates, restoring the orb display in Legacy and Diablo 2.
+- Corrected Stone and Bronze hand/rim layering and the lower angel/socket junction.
+- Added combo-point frame/settings state to diagnostic snapshots.
+
+### Validation
+
+- Reviewed the new themes and combo-point visibility in game; checked the dedicated Legacy meter palette, preserved texture dimensions/alpha, Lua 5.1 syntax and release packaging.
+- Developer-only artwork positioning tools are excluded from the public release. Public pet preview commands remain available.
+- Wider class, real-pet and combat-transition testing remains ongoing.
+
 ## [6.6.6-r5] - 2026-11-15
 
 Release for **WoW Forever 1.60.1 (70938), Interface 16001**.

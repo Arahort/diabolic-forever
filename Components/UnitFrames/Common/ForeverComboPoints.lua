@@ -12,7 +12,8 @@ local MAX_POINTS = 8
 local ORB_CHAIN_RADIUS = 89.5
 local IsSecret = issecretvalue or function() return false end
 local function Asset(name)
-	local folder = ns.db.global.orbs.style == "diablo2" and "arahort-stone-dark/" or "arahort-stone/"
+	local style = ns.db.global.orbs.style
+	local folder = style == "legacy" and "legacy-combo/" or style == "diablo2" and "diablo2-combo/" or "arahort-stone/"
 	local version = (name == "end-left" or name == "end-right") and "-v5" or "-v2"
 	return ns.API.GetMedia(folder.."combo-fang-"..name..version, "png")
 end
@@ -163,9 +164,9 @@ Combo.Refresh = function(self)
 			end
 		end
 	end
+	self:Update()
 	self:UpdatePlacement()
 	self.target:UpdateTargetCastbar()
-	self:Update()
 end
 Combo.Initialize = function(self, player, target, tot)
 	if self.player then return end

@@ -1112,6 +1112,10 @@ UnitStyles["Player"] = function(self, unit, id)
 	powerBorder:SetTexture(GetMedia("orb-border"))
 
 	self.Power.Border = powerBorder
+	local gripRim = artworkOverlay:CreateTexture(nil, "OVERLAY", nil, 2)
+	gripRim:SetAllPoints(powerBorder)
+	gripRim:Hide()
+	self.Power.GripRim = gripRim
 
 	local powerArt = artworkOverlay:CreateTexture(power:GetName().."Artwork", "OVERLAY", nil, 1)
 	powerArt:SetSize(powerBackdrop:GetSize())
@@ -1576,17 +1580,19 @@ UnitStyles["Player"] = function(self, unit, id)
 	ns.RegisterCallback(self, "OrbEyeGlow_Updated", "UpdateEyeGlow")
 	self.UpdateSuccubusArtworkPosition = function(self)
 		local active = ns.IsForever and ns.db.global.orbs.style == "succubus"
+		local bronze = ns.IsForever and ns.db.global.orbs.style == "stone-and-bronze"
 		local db = ns.db.char.orbs
 		self.Power.Artwork:ClearAllPoints()
-		self.Power.Artwork:SetPoint("BOTTOMLEFT", self.Power, "BOTTOM", active and (-111.5 + (db.succubusArtworkX or 0)) or -29, active and (-25 + (db.succubusArtworkY or 0)) or -25)
+		self.Power.Artwork:SetPoint("BOTTOMLEFT", self.Power, "BOTTOM", active and (-111.5 + (db.succubusArtworkX or 0)) or bronze and -61 or -29, active and (-25 + (db.succubusArtworkY or 0)) or bronze and -30 or -25)
 	end
 	self.UpdateOrbStyle = function(self)
 		local useD2RStyle = ns.db.global.orbs.useD2RStyle
 		local stone = ns.IsForever and ns.API.IsStoneStyle()
 		local succubus = stone and ns.db.global.orbs.style == "succubus"
+		local bronze = stone and ns.db.global.orbs.style == "stone-and-bronze"
 		self.Health.Artwork:SetSize(succubus and 660 or 330, 330)
 		self.Health.Artwork:ClearAllPoints()
-		self.Health.Artwork:SetPoint("BOTTOMRIGHT", self.Health, "BOTTOM", succubus and 90.875 or 29, -25)
+		self.Health.Artwork:SetPoint("BOTTOMRIGHT", self.Health, "BOTTOM", succubus and 90.875 or bronze and 37 or 29, bronze and -31 or -25)
 		self.Power.Artwork:SetSize(succubus and 660 or 330, succubus and 660 or 330)
 		self:UpdateSuccubusArtworkPosition()
 		local artworkBrightness = stone and .75 or 1
@@ -1611,6 +1617,9 @@ UnitStyles["Player"] = function(self, unit, id)
 		local borderTexture = ns.API.IsStoneStyle() and GetMedia("arahort-stone/orb-border", "png") or GetMedia("orb-border")
 		self.Health.Border:SetTexture(borderTexture)
 		self.Power.Border:SetTexture(borderTexture)
+		local bronzeGrip = ns.IsForever and ns.db.global.orbs.style == "stone-and-bronze"
+		if bronzeGrip then self.Power.GripRim:SetTexture(GetMedia("arahort-stone/orb-grip-rim", "png")) end
+		self.Power.GripRim:SetShown(bronzeGrip)
 		if ns.StoneHUD then ns.StoneHUD:PreparePlayer(self) end
 		self:UpdateEyeGlow()
 	end

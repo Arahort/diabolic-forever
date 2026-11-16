@@ -216,7 +216,7 @@ SettingsModule.OnInitialize = function(self)
 			local styleQueue = CreateFrame("Frame")
 			local SetOrbStyle
 			SetOrbStyle = function(value)
-				if value ~= "legacy" and value ~= "diablo2" and value ~= "arahort-stone" and value ~= "arahort-stone-dark" and value ~= "succubus" then return end
+				if value ~= "legacy" and value ~= "diablo2" and value ~= "arahort-stone" and value ~= "arahort-stone-dark" and value ~= "stone-and-bronze" and value ~= "stone-and-cupper" and value ~= "succubus" then return end
 				local current = ns.db.global.orbs.style
 				if ns.IsForever and value ~= current and InCombatLockdown() and (ns.API.IsStoneStyle(value) or ns.API.IsStoneStyle(current)) then
 					pendingStyle = value
@@ -252,6 +252,8 @@ SettingsModule.OnInitialize = function(self)
 					container:Add("diablo2", "Diablo 2")
 					container:Add("arahort-stone", "Stone Light")
 					container:Add("arahort-stone-dark", "Stone Dark")
+					container:Add("stone-and-bronze", "Stone and Bronze")
+					container:Add("stone-and-cupper", "Stone and Cupper")
 					container:Add("succubus", "Succubus")
 					return container:GetData()
 				end

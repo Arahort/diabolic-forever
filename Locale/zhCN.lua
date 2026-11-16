@@ -189,7 +189,7 @@ L["ComboPointsOnOrbDesc"] = "为潜行者和猎豹形态的德鲁伊沿生命球
 L["ComboPointsOnResourceOrb"] = "将连击点移至资源球"
 L["ComboPointsOnResourceOrbDesc"] = "在资源球上显示连击点，替代生命球上的显示。需先启用球体指示器。"
 L["ComboPointsOnTarget"] = "在目标下方显示连击点"
-L["ComboPointsOnTargetDesc"] = "在 Stone Light、Stone Dark 和 Succubus 主题的目标框体下方显示连击点。两处可同时开启。"
+L["ComboPointsOnTargetDesc"] = "在 Stone Light、Stone Dark、Stone and Bronze、Stone and Cupper 和 Succubus 主题的目标框体下方显示连击点。两处可同时开启。"
 -- Tooltips
 L["TooltipsHeader"] = "鼠标提示"
 L["TooltipOffsetX"] = "提示 X 偏移"

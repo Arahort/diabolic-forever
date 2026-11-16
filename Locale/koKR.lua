@@ -189,7 +189,7 @@ L["ComboPointsOnOrbDesc"] = "도적과 표범 변신 상태인 드루이드의 �
 L["ComboPointsOnResourceOrb"] = "연계 점수를 자원 구슬로 이동"
 L["ComboPointsOnResourceOrbDesc"] = "생명력 구슬 대신 자원 구슬에 연계 점수를 표시합니다. 구슬 표시가 활성화되어 있어야 합니다."
 L["ComboPointsOnTarget"] = "대상 아래에 연계 점수 표시"
-L["ComboPointsOnTargetDesc"] = "Stone Light, Stone Dark 및 Succubus 테마에서 대상 프레임 아래에 연계 점수를 표시합니다. 두 표시를 동시에 활성화할 수 있습니다."
+L["ComboPointsOnTargetDesc"] = "Stone Light, Stone Dark, Stone and Bronze, Stone and Cupper 및 Succubus 테마에서 대상 프레임 아래에 연계 점수를 표시합니다. 두 표시를 동시에 활성화할 수 있습니다."
 -- Tooltips
 L["TooltipsHeader"] = "툴팁"
 L["TooltipOffsetX"] = "툴팁 X 오프셋"

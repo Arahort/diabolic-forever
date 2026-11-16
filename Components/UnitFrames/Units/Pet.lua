@@ -117,7 +117,7 @@ local BACKDROP_RATIO = 1.65
 ns.API.GetPetMetalColor = function()
 	local style = ns.db.global.orbs.style
 	if style == "arahort-stone" then return .74, .70, .64 end
-	if style == "arahort-stone-dark" or style == "succubus" then return .46, .41, .35 end
+	if style == "arahort-stone-dark" or style == "stone-and-bronze" or style == "stone-and-cupper" or style == "succubus" then return .46, .41, .35 end
 	return .50, .44, .34
 end
 ns.API.UpdatePetOrbArtwork = function(frame)

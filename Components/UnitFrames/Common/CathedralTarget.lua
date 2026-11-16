@@ -63,7 +63,7 @@ local Capture = function(object)
 	end
 	if object.GetTexture then state.texture = object:GetTexture(); state.coords = { object:GetTexCoord() } end
 	if object.GetStatusBarTexture then
-		state.texture = object:GetStatusBarTexture():GetTexture()
+		state.texture = object.GetStatusBarTextureSource and object:GetStatusBarTextureSource() or object:GetStatusBarTexture():GetTexture()
 		state.coords = { object:GetStatusBarTexture():GetTexCoord() }
 	end
 	return state

@@ -189,7 +189,7 @@ L["ComboPointsOnOrbDesc"] = "Show combo points along the upper edge of the healt
 L["ComboPointsOnResourceOrb"] = "Move combo points to the resource orb"
 L["ComboPointsOnResourceOrbDesc"] = "Display combo points on the resource orb instead of the health orb. Requires the orb indicator to be enabled."
 L["ComboPointsOnTarget"] = "Combo points below the target"
-L["ComboPointsOnTargetDesc"] = "Show combo points below the target frame in Stone Light, Stone Dark and Succubus. Both displays can be enabled together."
+L["ComboPointsOnTargetDesc"] = "Show combo points below the target frame in Stone Light, Stone Dark, Stone and Bronze, Stone and Cupper and Succubus. Both displays can be enabled together."
 -- Tooltips
 L["TooltipsHeader"] = "Tooltips"
 L["TooltipOffsetX"] = "Tooltip X Offset"

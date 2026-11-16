@@ -1,6 +1,6 @@
 # Testing Diabolic UI Forever
 
-This guide covers public release **6.6.6-r5** on **WoW Forever 1.60.1 (70938), Interface 16001**. Test in the Forever client. Compatibility with another client or build is not implied.
+This guide covers public release **6.6.6-r6** on **WoW Forever 1.60.1 (70938), Interface 16001**. Test in the Forever client. Compatibility with another client or build is not implied.
 
 ## Before testing
 
@@ -16,7 +16,9 @@ Saved settings normally live at `_forever_/WTF/Account/<account>/SavedVariables/
 | Area | Check |
 |---|---|
 | Startup | Login, `/reload`, zone changes and logout/login; confirm settings and positions persist. |
-| Orbs and styles | Switch styles out of combat and after a queued combat change. Check health/resource colors, death/resurrection and Succubus artwork/eye alignment. |
+| Orbs and styles | Switch styles out of combat and after a queued combat change. Check health/resource colors, death/resurrection and Succubus / Stone and Bronze artwork/eye alignment. Check all seven styles, including pet artwork and one/two/three-row panels. |
+| Combo points | Check Legacy/Diablo 2 orb chains and their darker palettes; switch between Stone and non-Stone themes. Confirm hostile-target-only display and the resource-orb option. |
+| Damage Meter | In Legacy, confirm the dark metal frame/rows and native player names, values and class colours. Toggle custom styling off/on and check Edit Mode. |
 | Prediction | Begin and cancel a heal at partial health; finish a heal; check absorbs, heal absorbs and maximum-health changes. |
 | 3D models | Enable/disable models, choose a model and change speed. Report unavailable models by selection/name. |
 | Action bars | Icons, keybinds, cooldowns/charges, flyouts, out-of-range/usability colours and temporary action pages. |

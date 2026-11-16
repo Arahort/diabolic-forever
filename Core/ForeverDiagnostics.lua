@@ -261,6 +261,20 @@ local function snapshot(reason)
 	state.frames.PetUnitFrame = inspect(_G.DiabolicUnitFramePet)
 	state.frames.PetBarAnchor = inspect(_G.DiabolicUI3PetBarAnchor)
 	state.frames.TargetUnitFrame = inspect(_G.DiabolicUnitFrameTarget)
+	local combo = ns.ForeverComboPoints
+	if combo then
+		local row = combo.orbRow
+		local parent = row and row:GetParent()
+		state.comboPoints = {
+			style = value(ns.db and ns.db.global.orbs.style), initialized = combo.player ~= nil,
+			class = value(combo.class), maximum = value(combo.maximum), supported = value(combo.supported),
+			orbEnabled = value(combo.orbEnabled), targetEnabled = value(combo.targetEnabled),
+			resourceOrb = value(ns.db and ns.db.char.unitframes.comboOnResourceOrb),
+			orbRow = inspect(row), parent = inspect(parent),
+			alpha = read(row, "GetAlpha"), effectiveAlpha = read(row, "GetEffectiveAlpha"),
+			strata = read(row, "GetFrameStrata"), level = read(row, "GetFrameLevel")
+		}
+	end
 	local target = _G.DiabolicUnitFrameTarget
 	local layout = target and target.Cathedral and target.Cathedral.layout
 	if layout then

@@ -549,8 +549,8 @@ UnitFrames.SpawnUnitFrames = function(self)
 		end
 		WatchBaseUnitTarget(Spawn("targettarget", "ToT"), "target")
 			:SetPoint("CENTER", ns.UnitFramesByName["Target"], "CENTER", 0, -26)
-		if ns.CathedralTarget then ns.CathedralTarget:Initialize(targetFrame, ns.UnitFramesByName["ToT"]) end
 		if ns.ForeverComboPoints then ns.ForeverComboPoints:Initialize(ns.UnitFramesByName["Player"], targetFrame, ns.UnitFramesByName["ToT"]) end
+		if ns.CathedralTarget then ns.CathedralTarget:Initialize(targetFrame, ns.UnitFramesByName["ToT"]) end
 
 		-- Spawn pet frame
 		local petFrame = Spawn("pet", "Pet")

@@ -558,9 +558,13 @@ end
 StatusBar.SetStatusBarTexture = function(self, ...)
 	local data = Bars[self]
 	local arg = ...
-	if (type(arg) == "number") then
+	-- A lone number is a texture/file ID, including the client's negative cached IDs.
+	-- Only the RGB(A) overload is a solid colour.
+	if (select("#", ...) >= 3 and type(arg) == "number" and type(select(2, ...)) == "number" and type(select(3, ...)) == "number") then
+		data.textureSource = nil
 		data.bar:SetColorTexture(...)
 	else
+		data.textureSource = arg
 		data.bar:SetTexture(...)
 	end
 end
@@ -809,6 +813,9 @@ end
 
 StatusBar.GetStatusBarTexture = function(self)
 	return Bars[self].bar
+end
+StatusBar.GetStatusBarTextureSource = function(self)
+	return Bars[self].textureSource
 end
 
 StatusBar.GetNativeStatusBar = function(self) return Bars[self].nativeStatusBar end

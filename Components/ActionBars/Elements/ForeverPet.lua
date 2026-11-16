@@ -41,9 +41,11 @@ local function Artwork(parent)
 	return art
 end
 local function Sprite(texture, rect, mirror)
-	texture:SetTexture(GetMedia("pets/trophy-atlas", "png"))
+	local style = ns.db.global.orbs.style
+	local tinted = style == "stone-and-bronze" or style == "stone-and-cupper"
+	texture:SetTexture(GetMedia(tinted and "arahort-stone/petbar-trophy-atlas" or "pets/trophy-atlas", "png"))
 	texture:SetTexCoord((mirror and rect[3] or rect[1]) / 2172, (mirror and rect[1] or rect[3]) / 2172, rect[2] / 724, rect[4] / 724)
-	texture:SetVertexColor(ns.API.GetPetMetalColor())
+	if tinted then texture:SetVertexColor(1, 1, 1) else texture:SetVertexColor(ns.API.GetPetMetalColor()) end
 end
 local function SkinCell(button, texture, row)
 	Sprite(texture, row.cell)

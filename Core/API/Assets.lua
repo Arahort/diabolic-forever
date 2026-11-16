@@ -171,13 +171,17 @@ local alias = {
 local IsStoneStyle = function(style)
 	if not ns.IsForever then return false end
 	style = style or (ns.db and ns.db.global.orbs.style)
-	return style == "arahort-stone" or style == "arahort-stone-dark" or style == "succubus"
+	return style == "arahort-stone" or style == "arahort-stone-dark" or style == "stone-and-bronze" or style == "stone-and-cupper" or style == "succubus"
 end
 local GetMedia = function(name, extension)
 	if ns.IsForever and ns.db and type(name) == "string" and name:sub(1,14) == "arahort-stone/" then
 		local style = ns.db.global.orbs.style
 		if style == "arahort-stone-dark" then
 			name = "arahort-stone-dark/"..name:sub(15)
+		elseif style == "stone-and-bronze" then
+			name = "stone-and-bronze/"..name:sub(15)
+		elseif style == "stone-and-cupper" then
+			name = "stone-and-cupper/"..name:sub(15)
 		elseif style == "succubus" then
 			name = "succubus/"..name:sub(15)
 		end

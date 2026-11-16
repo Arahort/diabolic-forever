@@ -2,7 +2,7 @@
 
 ## Title: |cffaa0022Diabolic|r |cfffafafaUI|r |cffccccccForever Arahort Edition|r
 ## Notes: Orb based graphical interface for World of Warcraft Forever only (1.60.1)|nMaintained by Arahort (arahort.pro)|nBased on original DiabolicUI by Lars "Goldpaw" Norberg
-## Version: 6.6.6-r5
+## Version: 6.6.6-r6
 ## Author: Arahort
 ## IconTexture: Interface\AddOns\DiabolicUI3\Assets\diabolic-lettermark
 

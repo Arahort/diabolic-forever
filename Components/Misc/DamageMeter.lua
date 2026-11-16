@@ -5,7 +5,7 @@ local windows, entries = {}, setmetatable({}, { __mode = "k" })
 local FONT_SIZE, TEXT_PADDING = 12, 1.75
 local function Palette()
 	local style = ns.db.global.orbs.style
-	if style == "legacy" then return "arahort-stone/", .68, .70, .73 end
+	if style == "legacy" then return "legacy-meter/", 1, 1, 1 end
 	if style == "diablo2" then return "arahort-stone-dark/", 1, .91, .78 end
 	return "arahort-stone/", 1, 1, 1
 end

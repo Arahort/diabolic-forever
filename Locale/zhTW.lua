@@ -189,7 +189,7 @@ L["ComboPointsOnOrbDesc"] = "為盜賊與獵豹形態的德魯伊沿生命球上
 L["ComboPointsOnResourceOrb"] = "將連擊點移至資源球"
 L["ComboPointsOnResourceOrbDesc"] = "在資源球上顯示連擊點，取代生命球上的顯示。需先啟用球體指示器。"
 L["ComboPointsOnTarget"] = "在目標下方顯示連擊點"
-L["ComboPointsOnTargetDesc"] = "在 Stone Light、Stone Dark 與 Succubus 主題的目標框架下方顯示連擊點。兩處可同時開啟。"
+L["ComboPointsOnTargetDesc"] = "在 Stone Light、Stone Dark、Stone and Bronze、Stone and Cupper 與 Succubus 主題的目標框架下方顯示連擊點。兩處可同時開啟。"
 -- Tooltips
 L["TooltipsHeader"] = "滑鼠提示"
 L["TooltipOffsetX"] = "提示 X 偏移"

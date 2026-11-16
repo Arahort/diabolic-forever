@@ -189,7 +189,7 @@ L["ComboPointsOnOrbDesc"] = "Zeigt Combopunkte am oberen Rand der Lebenskugel f�
 L["ComboPointsOnResourceOrb"] = "Combopunkte auf die Ressourcenkugel verschieben"
 L["ComboPointsOnResourceOrbDesc"] = "Zeigt Combopunkte auf der Ressourcenkugel statt auf der Lebenskugel. Die Kugelanzeige muss aktiviert sein."
 L["ComboPointsOnTarget"] = "Combopunkte unter dem Ziel"
-L["ComboPointsOnTargetDesc"] = "Zeigt Combopunkte unter dem Zielfenster in Stone Light, Stone Dark und Succubus. Beide Anzeigen können gleichzeitig aktiviert werden."
+L["ComboPointsOnTargetDesc"] = "Zeigt Combopunkte unter dem Zielfenster in Stone Light, Stone Dark, Stone and Bronze, Stone and Cupper und Succubus. Beide Anzeigen können gleichzeitig aktiviert werden."
 -- Tooltips
 L["TooltipsHeader"] = "Tooltips"
 L["TooltipOffsetX"] = "Tooltip X-Versatz"

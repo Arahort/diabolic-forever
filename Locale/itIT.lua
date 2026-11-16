@@ -189,7 +189,7 @@ L["ComboPointsOnOrbDesc"] = "Mostra i punti combo sul bordo superiore della sfer
 L["ComboPointsOnResourceOrb"] = "Sposta i punti combo sulla sfera della risorsa"
 L["ComboPointsOnResourceOrbDesc"] = "Mostra i punti combo sulla sfera della risorsa anziché sulla sfera della salute. Richiede l’attivazione dell’indicatore sulla sfera."
 L["ComboPointsOnTarget"] = "Punti combo sotto il bersaglio"
-L["ComboPointsOnTargetDesc"] = "Mostra i punti combo sotto il riquadro del bersaglio in Stone Light, Stone Dark e Succubus. Entrambi gli indicatori possono essere attivati insieme."
+L["ComboPointsOnTargetDesc"] = "Mostra i punti combo sotto il riquadro del bersaglio in Stone Light, Stone Dark, Stone and Bronze, Stone and Cupper e Succubus. Entrambi gli indicatori possono essere attivati insieme."
 -- Tooltips
 L["TooltipsHeader"] = "Descrizioni comandi"
 L["TooltipOffsetX"] = "Offset X descrizione comando"

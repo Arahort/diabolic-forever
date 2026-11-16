@@ -11,7 +11,7 @@
 
 An orb-based graphical interface for **World of Warcraft: Forever**, with Diablo-inspired artwork and modern native UI integration.
 
-**Current release: `6.6.6-r5`, targeting Forever `1.60.1` (build `70938`, Interface `16001`).** Includes the restored pet health orb and class-themed pet bar. Wider class, dungeon/raid and combat-transition testing is still needed.
+**Current release: `6.6.6-r6`, targeting Forever `1.60.1` (build `70938`, Interface `16001`).** Adds Stone and Bronze / Stone and Cupper, new guardian artwork and restored Legacy/Diablo 2 orb combo points. Wider class, dungeon/raid and combat-transition testing is still needed.
 
 ## About this fork
 
@@ -21,7 +21,7 @@ Forever uses modern UI APIs despite its `1.60.1` version number. This edition us
 
 ## Features
 
-- Legacy, Diablo 2, Stone Light, Stone Dark and Succubus styles, with live switching, health/resource orbs and optional 3D models.
+- Legacy, Diablo 2, Stone Light, Stone Dark, Stone and Bronze, Stone and Cupper and Succubus styles, with live switching, health/resource orbs and optional 3D models.
 - Native resource-type colors and incoming-heal, absorb and heal-absorb displays, including healing prediction on target and group frames.
 - Live one/two/three-row action bars, hidden-bar hotkeys, form/page updates and native cooldown-number integration.
 - A Retail-shaped pet health orb and compact class-themed pet bar, with native Blizzard pet actions/autocast, an Edit Mode scale slider and `/diabolicpet` visual previews.

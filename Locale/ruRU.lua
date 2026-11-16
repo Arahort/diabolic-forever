@@ -189,7 +189,7 @@ L["ComboPointsOnOrbDesc"] = "Показывать комбо-поинты вдо
 L["ComboPointsOnResourceOrb"] = "Перенести комбо-поинты на орбу ресурсов"
 L["ComboPointsOnResourceOrbDesc"] = "Показывать комбо-поинты на орбе ресурсов вместо орбы здоровья. Требуется включить индикатор на орбе."
 L["ComboPointsOnTarget"] = "Комбо-поинты под целью"
-L["ComboPointsOnTargetDesc"] = "Показывать комбо-поинты под фреймом цели в Stone Light, Stone Dark и Succubus. Оба индикатора можно включить одновременно."
+L["ComboPointsOnTargetDesc"] = "Показывать комбо-поинты под фреймом цели в Stone Light, Stone Dark, Stone and Bronze, Stone and Cupper и Succubus. Оба индикатора можно включить одновременно."
 -- Tooltips
 L["TooltipsHeader"] = "Подсказки"
 L["TooltipOffsetX"] = "Смещение подсказок по X"
