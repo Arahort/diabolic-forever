@@ -1,5 +1,23 @@
 # Diabolic UI Forever changelog
 
+## [6.6.6-r7] - 2026-11-17
+
+Release for **WoW Forever 1.60.1 (70938), Interface 16001**.
+
+### Changed
+
+- Added theme-matched group-finder eye borders for Stone Light, Stone Dark, Succubus, Stone and Bronze, and Stone and Cupper.
+- Matched border brightness and metal hues to each theme's actual minimap frame, including the bronze contour lines.
+- Preserved the original yellow iris, pupil, texture dimensions and transparency. Legacy and Diablo 2 retain their original eye artwork and tint.
+- Restricted the new themes' pulsing glow to the iris so the metal border keeps its intended colour.
+- Refreshed the eye artwork when switching themes or when the native group-finder button becomes available; native queue clicks and status handling remain unchanged.
+
+### Validation
+
+- Reviewed static assemblies of all seven minimap/eye combinations.
+- Verified Lua 5.1 syntax, theme-switch texture/tint routing, unchanged iris/alpha data and release archive contents.
+- Static previews and controlled checks do not replace testing native queue transitions in the client.
+
 ## [6.6.6-r6] - 2026-11-16
 
 Release for **WoW Forever 1.60.1 (70938), Interface 16001**.

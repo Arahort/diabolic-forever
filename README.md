@@ -11,7 +11,7 @@
 
 An orb-based graphical interface for **World of Warcraft: Forever**, with Diablo-inspired artwork and modern native UI integration.
 
-**Current release: `6.6.6-r6`, targeting Forever `1.60.1` (build `70938`, Interface `16001`).** Adds Stone and Bronze / Stone and Cupper, new guardian artwork and restored Legacy/Diablo 2 orb combo points. Wider class, dungeon/raid and combat-transition testing is still needed.
+**Current release: `6.6.6-r7`, targeting Forever `1.60.1` (build `70938`, Interface `16001`).** Includes theme-matched group-finder eye borders with the original yellow iris and an iris-only pulse for Stone-family themes. Wider class, dungeon/raid and combat-transition testing is still needed.
 
 ## About this fork
 
@@ -28,7 +28,7 @@ Forever uses modern UI APIs despite its `1.60.1` version number. This edition us
 - A styled native player castbar with cast/channel time and a separate Edit Mode mover.
 - Compact Stone-family target/ToT and group frames, a centered 3D portrait with 2D fallback, and independently sized target auras. The custom player-debuff frame is temporarily disabled.
 - A hover-only clockwise minimap XP/rested arc with defined ends and brass rails. Thickness and transparency update live from the **Minimap Edit Mode window**.
-- Minimap coordinates, group-finder integration and an addon-button collector.
+- Minimap coordinates, group-finder integration with theme-matched eye borders, and an addon-button collector.
 - A custom MicroMenu presentation around native buttons, cursor-aware tooltips and matching game-menu artwork.
 - Configurable combo points on an orb and, in Stone-family styles, below hostile targets; optional styling of Blizzard's native Damage Meter.
 - Native Settings integration and translations for all 12 supported locales.

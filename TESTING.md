@@ -1,6 +1,6 @@
 # Testing Diabolic UI Forever
 
-This guide covers public release **6.6.6-r6** on **WoW Forever 1.60.1 (70938), Interface 16001**. Test in the Forever client. Compatibility with another client or build is not implied.
+This guide covers public release **6.6.6-r7** on **WoW Forever 1.60.1 (70938), Interface 16001**. Test in the Forever client. Compatibility with another client or build is not implied.
 
 ## Before testing
 
@@ -26,7 +26,7 @@ Saved settings normally live at `_forever_/WTF/Account/<account>/SavedVariables/
 | Party | Join/leave, invite/remove members during combat, change leader and check that frames retain their size. |
 | Auras | Apply/remove auras and check duration/count updates. Change target aura size independently of frame scale. The custom player-debuff frame is currently disabled. |
 | Castbar | Normal casts, channels, cancellation and interruption. Move it in Edit Mode; exit while casting and confirm progress/time remain correct. |
-| Minimap | Coordinates, tracking, mail and native group-finder clicks after layout changes. |
+| Minimap | Coordinates, tracking, mail and native group-finder clicks after layout changes. Switch all seven themes while the queue eye is visible; check the yellow iris, matching metal border and pulse. Legacy/Diablo 2 retain their original appearance. |
 | XP arc | Hover/leave the minimap; gain XP/rested XP; change minimap scale, thickness and transparency live. Check end caps, brass rails and 0%/100% transparency. |
 | Other bars | Confirm reputation and other native status bars remain available; the replaced XP presentation should not leave an extra movable region. |
 | Menus | Hover the toggle, open/close the custom MicroMenu, then enter/leave combat; check native button clicks and the backpack's circular hover art. |

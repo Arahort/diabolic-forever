@@ -336,6 +336,18 @@ MinimapMod.RepositionMailFrame = function(self)
 	end
 end
 
+MinimapMod.UpdateQueueEyeStyle = function(self)
+	local stone = ns.IsForever and ns.API.IsStoneStyle()
+	local texture = stone and GetMedia("arahort-stone/group-finder-eye", "png") or GetMedia("group-finder-eye-orange")
+	if self.queueEyeTexture then
+		self.queueEyeTexture:SetTexture(texture)
+		if stone then self.queueEyeTexture:SetVertexColor(1, 1, 1) else self.queueEyeTexture:SetVertexColor(.85, .8, .75) end
+	end
+	if self.queueEyeGlow then
+		self.queueEyeGlow:SetTexture(stone and GetMedia("group-finder-eye-iris-glow", "png") or texture)
+		if stone then self.queueEyeGlow:SetVertexColor(1, 1, 1) else self.queueEyeGlow:SetVertexColor(1, .85, .5) end
+	end
+end
 MinimapMod.RepositionQueueStatus = function(self)
 	-- WoW 12.0: QueueStatusButton is the LFG eye
 	local queueButton = QueueStatusButton
@@ -389,6 +401,7 @@ MinimapMod.RepositionQueueStatus = function(self)
 			queueButton.Highlight:SetAlpha(0)
 		end
 	end
+	self:UpdateQueueEyeStyle()
 	-- Always reposition
 	queueButton:SetParent(self.queueHolder)
 	queueButton:ClearAllPoints()
@@ -704,9 +717,9 @@ MinimapMod.HideBlizzardZoneFrames = function(self)
 	end
 end
 MinimapMod.UpdateBorderStyle = function(self)
-	if not self.border then return end
 	local stone = ns.IsForever and ns.API.IsStoneStyle()
-	self.border:SetTexture(stone and GetMedia("arahort-stone/minimap-border", "png") or GetMedia("minimap-border"))
+	if self.border then self.border:SetTexture(stone and GetMedia("arahort-stone/minimap-border", "png") or GetMedia("minimap-border")) end
+	self:UpdateQueueEyeStyle()
 end
 MinimapMod.StyleMinimap = function(self)
 
