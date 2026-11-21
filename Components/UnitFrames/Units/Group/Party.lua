@@ -14,6 +14,7 @@ local UnitGroupRolesAssigned = UnitGroupRolesAssigned
 local UnitIsConnected = UnitIsConnected
 local UnitIsDeadOrGhost = UnitIsDeadOrGhost
 local UnitIsUnit = UnitIsUnit
+local UnitIsVisible = UnitIsVisible
 local UnitPowerMax = UnitPowerMax
 local issecretvalue = issecretvalue or function() return false end
 -- Addon API
@@ -115,56 +116,56 @@ local Health_PostUpdateColor = function(element, unit, r, g, b)
 		element:SetStatusBarColor(r, g, b)
 	end
 end
--- Portrait post-update (handles offline/OOR state)
--- Skip expensive ClearModel+SetUnit when unit GUID hasn't changed (prevents
--- animation restart on units like focustarget that get frequent updates).
-local Portrait_PostUpdate = function(element, unit, hasStateChanged)
-	-- WoW 12.0: UnitGUID can return secret value for focustarget/targettarget in combat.
-	-- Comparing or storing secret values would taint the portrait frame.
-	local ok, newGuid = pcall(UnitGUID, unit)
-	if (not ok) then newGuid = nil end
-	local guidIsSecret = newGuid and issecretvalue(newGuid)
-	if (guidIsSecret) then newGuid = nil end
-	-- Ensure the 2D fallback texture exists (used when 3D model is unavailable).
-	if (not element.fallback2DTexture) then
-		element.fallback2DTexture = element:CreateTexture()
-		element.fallback2DTexture:SetDrawLayer("ARTWORK")
-		element.fallback2DTexture:SetAllPoints()
-		element.fallback2DTexture:SetTexCoord(.1, .9, .1, .9)
+-- The fallback is a sibling texture, so hiding the model cannot hide the 2D portrait.
+local Portrait_ShowModel = function(element)
+	local ready = false
+	if element.portraitAllowed then
+		local ok, fileID = pcall(element.GetModelFileID, element)
+		ready = ok and not issecretvalue(fileID) and type(fileID) == "number" and fileID > 0
 	end
-	-- Offline/OOR: always use 2D fallback.
-	if (not element.state) then
-		if (element.guid ~= newGuid) then
-			element:ClearModel()
-			pcall(SetPortraitTexture, element.fallback2DTexture, unit)
-			element.guid = newGuid
-		end
-		element.fallback2DTexture:Show()
-		return
-	end
-	-- Secret unit (typical focustarget on hostile NPC): 3D model can't be loaded safely,
-	-- so show a 2D portrait texture instead — prevents an empty frame.
-	if (guidIsSecret) then
-		element:ClearModel()
-		pcall(SetPortraitTexture, element.fallback2DTexture, unit)
-		element.fallback2DTexture:Show()
-		element.guid = nil
-		return
-	end
-	-- Normal path: 3D unit model.
-	if (element.fallback2DTexture) then
+	if ready then
 		element.fallback2DTexture:Hide()
+		element:SetAlpha(.85)
+	else
+		element:SetAlpha(0)
+		element.fallback2DTexture:Show()
 	end
-	if (element.guid == newGuid) then
-		return -- same unit — don't restart animation
+end
+-- Own the update instead of running after oUF has already loaded another model.
+local Portrait_Update = function(owner, event, unit)
+	if issecretvalue(unit) or not unit or not oUF.Private.unitIsUnit(owner.__unit, unit) then return end
+	local element = owner.Portrait
+	local ok, guid = pcall(UnitGUID, unit)
+	local restricted = not ok or issecretvalue(guid)
+	if restricted then guid = nil end
+	if C_Secrets and C_Secrets.ShouldUnitIdentityBeSecret then
+		local identityOK, hidden = pcall(C_Secrets.ShouldUnitIdentityBeSecret, unit)
+		restricted = restricted or not identityOK or issecretvalue(hidden) or hidden
 	end
+	local connectedOK, connected = pcall(UnitIsConnected, unit)
+	local visibleOK, visible = pcall(UnitIsVisible, unit)
+	local available = connectedOK and not issecretvalue(connected) and connected and visibleOK and not issecretvalue(visible) and visible
+	local allowed = not restricted and guid ~= nil and not not available
+	local changed = element.portraitUnit ~= unit or element.guid ~= guid or element.portraitAllowed ~= allowed
+	if not changed and event ~= "UNIT_MODEL_CHANGED" and event ~= "UNIT_PORTRAIT_UPDATE" and event ~= "PORTRAITS_UPDATED" then
+		Portrait_ShowModel(element)
+		return
+	end
+	pcall(SetPortraitTexture, element.fallback2DTexture, unit)
+	element.portraitAllowed = false
+	element:SetAlpha(0)
+	element.fallback2DTexture:Show()
+	element:ClearModel()
+	element.portraitUnit, element.guid = unit, guid
+	if not allowed then Portrait_ShowModel(element); return end
+	element.portraitAllowed = true
 	element:SetCamDistanceScale(1)
 	element:SetPortraitZoom(1)
 	element:SetPosition(0, 0, 0)
 	element:SetRotation(0)
-	element:ClearModel()
-	pcall(element.SetUnit, element, unit)
-	element.guid = newGuid
+	local loaded, success = pcall(element.SetUnit, element, unit)
+	if not loaded or (not issecretvalue(success) and success == false) then element.portraitAllowed = false end
+	Portrait_ShowModel(element)
 end
 -- Power post-update (hide when dead/disconnected or no power resource).
 -- WoW 12.0: on units like focustarget (hostile NPC) UnitPowerMax can return a
@@ -293,7 +294,15 @@ UnitStyles["Party"] = function(self, unit, id)
 	portrait:SetPoint("BOTTOM", 0, PORTRAIT_OFFSET_Y)
 	portrait:SetAlpha(.85)
 	self.Portrait = portrait
-	self.Portrait.PostUpdate = Portrait_PostUpdate
+	self.Portrait.Override = Portrait_Update
+	local fallback = portraitFrame:CreateTexture(nil, "ARTWORK")
+	fallback:SetAllPoints(portrait)
+	fallback:SetTexCoord(.1, .9, .1, .9)
+	fallback:SetAlpha(.85)
+	fallback:Hide()
+	portrait.fallback2DTexture = fallback
+	portrait:SetAlpha(0)
+	portrait:SetScript("OnModelLoaded", Portrait_ShowModel)
 	-- Portrait background
 	local portraitBg = portraitFrame:CreateTexture(nil, "BACKGROUND", nil, 0)
 	portraitBg:SetSize(PORTRAIT_BG_SIZE, PORTRAIT_BG_SIZE)

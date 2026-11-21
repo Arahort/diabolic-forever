@@ -11,7 +11,7 @@
 
 An orb-based graphical interface for **World of Warcraft: Forever**, with Diablo-inspired artwork and modern native UI integration.
 
-**Current release: `6.6.6-r7`, targeting Forever `1.60.1` (build `70938`, Interface `16001`).** Includes theme-matched group-finder eye borders with the original yellow iris and an iris-only pulse for Stone-family themes. Wider class, dungeon/raid and combat-transition testing is still needed.
+**Current release: `6.6.6-r8`, targeting Forever `1.60.1` (build `70938`, Interface `16001`).** Fixes overlapping 3D/2D portraits on target, party, focus and focus-target frames. Wider class, dungeon/raid and combat-transition testing is still needed.
 
 ## About this fork
 

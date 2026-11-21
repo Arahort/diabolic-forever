@@ -101,11 +101,11 @@ local ShowModel = function(model)
 		model:SetPortraitZoom(1)
 		model:SetCamDistanceScale(.85)
 		model:SetPosition(0, 0, 0)
-		model:SetAlpha(1)
 		model.Fallback:SetAlpha(0)
+		model:SetAlpha(1)
 		ns.ForeverNativeFallbacks.CathedralPortrait = "3d"
 	else
-		model:SetAlpha(model.cathedralAllowed and 1 or 0)
+		model:SetAlpha(0)
 		model.Fallback:SetAlpha(1)
 		ns.ForeverNativeFallbacks.CathedralPortrait = model.cathedralRestricted and "2d:identity" or "2d:loading"
 	end
@@ -134,7 +134,6 @@ local PortraitUpdate = function(owner, event, unit)
 	model:ClearModel()
 	if identitySecret or not UnitExists(unit) then ShowModel(model); return end
 	model.cathedralAllowed = true
-	model:SetAlpha(1)
 	local loaded, success = pcall(model.SetUnit, model, unit)
 	if not loaded or (not IsSecret(success) and success == false) then model.cathedralAllowed = false end
 	ShowModel(model)

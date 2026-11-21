@@ -1,5 +1,23 @@
 # Diabolic UI Forever changelog
 
+## [6.6.6-r8] - 2026-11-22
+
+Release for **WoW Forever 1.60.1 (70938), Interface 16001**.
+
+### Fixed
+
+- Prevented 3D models and 2D fallback portraits from appearing together on party, focus and focus-target frames in all themes.
+- Replaced the group portrait's conflicting post-update path with a single owner for model loading and fallback visibility.
+- Kept the 2D fallback on a separate parent so it remains visible while the model is transparent; hid it before showing a ready 3D model.
+- Hid the Stone-family target's 3D portrait until model readiness is confirmed, eliminating the overlapping loading state.
+- Preserved 2D fallback for unavailable/restricted unit identities and failed model loads, and avoided restarting animations on unchanged-unit polling.
+
+### Validation
+
+- Passed Lua 5.1 syntax and isolated transition checks for synchronous/asynchronous loading, repeated updates, unit changes, offline/out-of-range recovery, restricted/secret values and failed loads.
+- Checked exclusive visibility after every visibility setter in the controlled scenarios.
+- These checks are not an in-client reproduction; further visual and combat-transition testing remains ongoing.
+
 ## [6.6.6-r7] - 2026-11-17
 
 Release for **WoW Forever 1.60.1 (70938), Interface 16001**.
