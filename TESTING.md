@@ -1,6 +1,6 @@
 # Testing Diabolic UI Forever
 
-This guide covers public release **6.6.6-r8** on **WoW Forever 1.60.1 (70938), Interface 16001**. Test in the Forever client. Compatibility with another client or build is not implied.
+This guide covers public release **6.6.6-r9** on **WoW Forever 1.60.1 (71037), Interface 16001**. Test in the Forever client. Compatibility with another client or build is not implied.
 
 ## Before testing
 
@@ -20,7 +20,7 @@ Saved settings normally live at `_forever_/WTF/Account/<account>/SavedVariables/
 | Combo points | Check Legacy/Diablo 2 orb chains and their darker palettes; switch between Stone and non-Stone themes. Confirm hostile-target-only display and the resource-orb option. |
 | Damage Meter | In Legacy, confirm the dark metal frame/rows and native player names, values and class colours. Toggle custom styling off/on and check Edit Mode. |
 | Prediction | Begin and cancel a heal at partial health; finish a heal; check absorbs, heal absorbs and maximum-health changes. |
-| Portrait fallback | Check target, party, focus and focus-target portraits while switching units and when members go offline/out of range and return. Only the 2D fallback should be visible while loading, then only the ready 3D model. Check repeated updates and combat transitions. |
+| Portrait fallback | Check target, party, focus and focus-target portraits while switching units and when members go offline/out of range and return. Only the 2D fallback should be visible while loading, then only the ready 3D model. Check repeated updates and combat transitions. Enter/leave Edit Mode with both keyboard/mouse and gamepad HUD styles; confirm the r8 Private error does not recur. |
 | 3D models | Enable/disable models, choose a model and change speed. Report unavailable models by selection/name. |
 | Action bars | Icons, keybinds, cooldowns/charges, flyouts, out-of-range/usability colours and temporary action pages. |
 | Native controls | Pet summon/dismiss, autocast, possession, forms/stances and shaman totems, as applicable to your class. |

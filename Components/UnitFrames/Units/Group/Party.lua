@@ -133,7 +133,15 @@ local Portrait_ShowModel = function(element)
 end
 -- Own the update instead of running after oUF has already loaded another model.
 local Portrait_Update = function(owner, event, unit)
-	if issecretvalue(unit) or not unit or not oUF.Private.unitIsUnit(owner.__unit, unit) then return end
+	if issecretvalue(unit) or not unit or issecretvalue(owner.__unit) or not owner.__unit then return end
+	if owner.__unit ~= unit then
+		if C_Secrets and C_Secrets.CanCompareUnitTokens then
+			local ok, comparable = pcall(C_Secrets.CanCompareUnitTokens, owner.__unit, unit)
+			if not ok or issecretvalue(comparable) or not comparable then return end
+		end
+		local ok, same = pcall(UnitIsUnit, owner.__unit, unit)
+		if not ok or issecretvalue(same) or not same then return end
+	end
 	local element = owner.Portrait
 	local ok, guid = pcall(UnitGUID, unit)
 	local restricted = not ok or issecretvalue(guid)

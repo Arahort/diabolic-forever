@@ -3,7 +3,7 @@
 </p>
 
 [![Version](https://img.shields.io/github/v/release/Arahort/diabolic-forever?label=Version)](https://github.com/Arahort/diabolic-forever/releases)
-[![WoW Forever](https://img.shields.io/badge/WoW%20Forever-1.60.1%20%2870938%29-blue)](https://github.com/Arahort/diabolic-forever)
+[![WoW Forever](https://img.shields.io/badge/WoW%20Forever-1.60.1%20%2871037%29-blue)](https://github.com/Arahort/diabolic-forever)
 [![Status](https://img.shields.io/badge/Status-Release-brightgreen)](https://github.com/Arahort/diabolic-forever/releases)
 [![Discord](https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white)](https://discord.com/channels/407765646634385408/1478671797695025272)
 
@@ -11,7 +11,7 @@
 
 An orb-based graphical interface for **World of Warcraft: Forever**, with Diablo-inspired artwork and modern native UI integration.
 
-**Current release: `6.6.6-r8`, targeting Forever `1.60.1` (build `70938`, Interface `16001`).** Fixes overlapping 3D/2D portraits on target, party, focus and focus-target frames. Wider class, dungeon/raid and combat-transition testing is still needed.
+**Current release: `6.6.6-r9`, targeting Forever `1.60.1` (build `71037`, Interface `16001`).** Hotfixes the r8 group-portrait error while preserving exclusive 3D/2D fallback visibility. Wider class, dungeon/raid and combat-transition testing is still needed.
 
 ## About this fork
 
@@ -39,7 +39,7 @@ Native pet controls, stances/forms, totem controls, raid frames and other status
 
 ## Requirements
 
-- **WoW Forever `1.60.1` (build `70938`), Interface `16001`.**
+- **WoW Forever `1.60.1` (build `71037`), Interface `16001`.**
 - Bundled libraries are included; a separate Ace3 or oUF installation is not required.
 - Optional: LibSharedMedia for additional fonts; BugGrabber/BugSack for error reports.
 

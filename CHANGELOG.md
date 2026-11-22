@@ -1,5 +1,22 @@
 # Diabolic UI Forever changelog
 
+## [6.6.6-r9] - 2026-11-22
+
+Hotfix for **WoW Forever 1.60.1 (71037), Interface 16001**.
+
+### Fixed
+
+- Fixed the repeated Party.lua:136 "attempt to index field 'Private' (a nil value)" error introduced in r8, including updates triggered by Edit Mode and the gamepad HUD.
+- Removed the group portrait's dependency on the unexported oUF.Private table.
+- Matched identical public unit tokens directly and used guarded public Blizzard APIs for aliases, rejecting unavailable, restricted or secret comparison results.
+- Retained exclusive 3D/2D visibility and unchanged-unit animation continuity for party, focus and focus-target portraits.
+
+### Validation
+
+- Reproduced the original error without an exported oUF private table and passed Lua 5.1 checks on the correction.
+- Checked player/party/focus/focus-target updates, including 182 polling updates per unit, aliases, secret values, unavailable comparisons and offline recovery.
+- In-client confirmation after the hotfix remains pending.
+
 ## [6.6.6-r8] - 2026-11-22
 
 Release for **WoW Forever 1.60.1 (70938), Interface 16001**.
